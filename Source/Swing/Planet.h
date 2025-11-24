@@ -28,12 +28,19 @@ public:
 	float GetGravity() const;
 	//重力半径の取得
 	float GetGradius() const;
+	//名前の取得
+	FName GetName() const;
 	
 protected:
 	//重力の範囲
 	UPROPERTY(EditAnywhere,Category = Gravity,meta = (AllowPrivateAccess = "true"))
 	USphereComponent* m_pGravitySphere;
+
 	//重力
 	UPROPERTY(EditAnywhere, Category = Gravity, meta = (AllowPrivateAccess = "true"))
 	float m_Gravity;
+
+	//星の名前
+	UPROPERTY(EditAnywhere,Category = Name,meta = (AllowPrivateAccess = "true"))
+	FName m_Name;
 };

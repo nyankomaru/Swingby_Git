@@ -6,14 +6,15 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Planet.h"
 
+//コンストラクタ
 APlayerChara::APlayerChara()
-	:m_Rot(0.0f)
-	, m_pPlanet(NULL)
+	: m_MoveDire(0.0f)
+	, m_Rot(0.0f)
 	, m_ForwardInput(0.0f)
-	, m_MoveDire(0.0f)
 {
 	//コリジョンを生成
 	m_pMainCollision = CreateDefaultSubobject<UCapsuleComponent>("m_pMainCollision");
@@ -23,8 +24,8 @@ APlayerChara::APlayerChara()
 		RootComponent = m_pMainCollision;
 		m_pMainCollision->SetSimulatePhysics(false);
 
-		//当たり判定
-		m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
+		//当たり判定(ここでは全部無視)
+		m_pMainCollision->SetCollisionProfileName("AllIgnore");
 		//重力無効
 		m_pMainCollision->SetEnableGravity(false);
 		//オーバーラップイベントの有効化・登録
@@ -59,6 +60,13 @@ APlayerChara::APlayerChara()
 		m_pCamera->SetupAttachment(m_pSpringArm);
 	}
 
+	//移動コンポーネントの生成
+	m_pMovement = CreateDefaultSubobject<UFloatingPawnMovement>("m_pMovement");
+	if (m_pMovement)
+	{
+		m_pMovement->Acceleration = 1.0f;
+	}
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_Rot.Pitch);
 }
 
@@ -81,28 +89,45 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	InputComponent->BindAxis("LeftClick", this, &APlayerChara::RotRoll);
 }
 
+//ティック
 void APlayerChara::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
+
 	UpdateRotation(DeltaTime);
 	UpdateMove(DeltaTime);
+
+	UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
+}
+
+//ゲームスタート時
+void APlayerChara::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//当たり判定(ここで判定を入れるとすでに重なっているものもbeginが発生)
+	m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%f , %f"), Cast<USphereComponent>(OtherComp)->GetScaledSphereRadius(), (OtherComp->GetComponentLocation() - GetActorLocation()).Length());
 
-	if (!m_pPlanet)
-	{
-		m_pPlanet = Cast<APlanet>(OtherActor);
-	}
+	//相手が重力の場合処理を行う
+	if (!OtherComp->ComponentHasTag("Gravity")) { return; }
+
+	//配列に追加
+	m_pPlanets.Add(Cast<APlanet>(OtherActor));
+	
+	//UE_LOG(LogTemp, Warning, TEXT("%f , %f"), Cast<USphereComponent>(OtherComp)->GetScaledSphereRadius(), (OtherComp->GetComponentLocation() - GetActorLocation()).Length());
 }
 
 void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (m_pPlanet)
-	{
-		m_pPlanet = NULL;
-	}
+	//相手が重力の場合処理を行う
+	if (!OtherComp->ComponentHasTag("Gravity")) { return; }
+
+	//配列から削除
+	m_pPlanets.Remove(Cast<APlanet>(OtherActor));
 }
 
 //上方向の向きの取得
@@ -134,22 +159,26 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		m_ForwardInput = 0.0f;
 	}
 
-	//重力を受けているとき
-	if (m_pPlanet)
+	//重力を受ける対象分
+	for (int i = 0; i < m_pPlanets.Num(); ++i)
 	{
 		//星に向かう方向
-		FVector PlanetDire(m_pPlanet->GetActorLocation() - GetActorLocation());
+		FVector PlanetDire(m_pPlanets[i]->GetActorLocation() - GetActorLocation());
 
 		//星との距離
 		float Distance(PlanetDire.Length());
 
 		//向かう強さ(近いほど設定した値に近くなる)
-		float Gravity(m_pPlanet->GetGravity() * (1.0f - Distance / m_pPlanet->GetGradius()));
+		float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius()));
 
 		m_MoveDire = m_MoveDire + PlanetDire.GetSafeNormal() * Gravity;
+
+		//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
 	}
 
-	AddActorWorldOffset(m_MoveDire * m_ForwardSpeed * DeltaTime);
+	//AddActorWorldOffset(m_MoveDire * m_ForwardSpeed * DeltaTime);
+
+	AddMovementInput(m_MoveDire);
 }
 
 //移動

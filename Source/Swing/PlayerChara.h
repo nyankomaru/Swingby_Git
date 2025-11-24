@@ -11,6 +11,7 @@ class UCapsuleComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class APlanet;
+class UFloatingPawnMovement;
 
 /**
  * 
@@ -26,6 +27,9 @@ public:
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Tick(float DeltaTime) override;
+
+protected:
+	void BeginPlay() override;
 
 public:
 	//オーバーラップ時
@@ -73,6 +77,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* m_pCamera;
 
+	//移動コンポーネント
+	UPROPERTY(EditAnywhere,Category = Move,meta = (AllowPrivateAccess = "true"))
+	UFloatingPawnMovement* m_pMovement;
+
 	//回転速度の倍率
 	UPROPERTY(EditAnywhere,Category = Speed,meta = (AllowPrivateAccess = "true"))
 	float m_RotSpeedRate;
@@ -82,11 +90,9 @@ private:
 	float m_ForwardSpeed;
 
 private:
-	APlanet* m_pPlanet;	//重力の影響を受ける星
+	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
 
-	FRotator m_Rot;	//回転角度
-
+	FVector m_MoveDire;		//進行方向
+	FRotator m_Rot;			//回転角度
 	float m_ForwardInput;	//前進速度
-
-	FVector m_MoveDire;	//進行方向
 };

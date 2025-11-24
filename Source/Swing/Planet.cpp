@@ -20,6 +20,8 @@ APlanet::APlanet()
 		m_pGravitySphere->SetupAttachment(RootComponent);
 		//動かず重なる
 		m_pGravitySphere->SetCollisionProfileName("MyOverlapStatic");
+		//タグを持たせる
+		m_pGravitySphere->ComponentTags.Add("Gravity");
 	}
 }
 
@@ -27,7 +29,7 @@ void APlanet::BeginPlay()
 {
 	if (m_pGravitySphere)
 	{
-		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 50.0f));
+		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 5000.0f));
 	}
 }
 
@@ -41,4 +43,10 @@ float APlanet::GetGravity() const
 float APlanet::GetGradius() const
 {
 	return m_pGravitySphere->GetScaledSphereRadius();
+}
+
+//名前の取得
+FName APlanet::GetName() const
+{
+	return m_Name;
 }
