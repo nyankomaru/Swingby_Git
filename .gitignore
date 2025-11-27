@@ -25,7 +25,6 @@ __MACOSX/
 # Visual Studio / IDE 系
 ###############################
 .vs/
-*.sln
 *.suo
 *.opensdf
 *.sdf
