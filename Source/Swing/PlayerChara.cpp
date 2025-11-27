@@ -97,7 +97,7 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateRotation(DeltaTime);
 	UpdateMove(DeltaTime);
 
-	UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%f"), m_MoveDire.Length());
 }
 
 //ゲームスタート時
@@ -178,7 +178,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 	//AddActorWorldOffset(m_MoveDire * m_ForwardSpeed * DeltaTime);
 
-	AddMovementInput(m_MoveDire);
+	AddMovementInput(m_MoveDire,m_MoveDire.Length());
 }
 
 //移動
