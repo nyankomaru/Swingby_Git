@@ -9,6 +9,7 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Planet.h"
+#include "DrawDebugHelpers.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -98,6 +99,9 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateMove(DeltaTime);
 
 	UE_LOG(LogTemp, Warning, TEXT("%f"), m_MoveDire.Length());
+
+	FVector AcLoc(GetActorLocation());
+	DrawDebugLine(GetWorld(), AcLoc, AcLoc + m_MoveDire, FColor::Green);
 }
 
 //ゲームスタート時
@@ -143,7 +147,11 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	{
 		AddActorLocalRotation(m_Rot * DeltaTime * m_RotSpeedRate);
 
+		//m_pSpringArm->AddLocalRotation(m_Rot * DeltaTime * m_RotSpeedRate);
+
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
+
+
 	}
 }
 

@@ -6,14 +6,15 @@
 APlanet::APlanet()
 	:m_Gravity(0.0f)
 {
+	//コリジョン（惑星自体）とメッシュの生成
 	CreateColliAndMesh<USphereComponent, UStaticMeshComponent>();
-
 	if (m_pMainCollision)
 	{
 		//動かず当たる
 		m_pMainCollision->SetCollisionProfileName("MyBlockStatic");
 	}
 
+	//重力範囲の生成
 	m_pGravitySphere = CreateDefaultSubobject<USphereComponent>("m_pGravitySphere");
 	if (m_pGravitySphere)
 	{
@@ -22,6 +23,8 @@ APlanet::APlanet()
 		m_pGravitySphere->SetCollisionProfileName("MyOverlapStatic");
 		//タグを持たせる
 		m_pGravitySphere->ComponentTags.Add("Gravity");
+		//エディタ上でのちらつきを抑える為に小さくする
+		m_pGravitySphere->SetWorldScale3D(FVector(0.2f));
 	}
 }
 
@@ -29,7 +32,7 @@ void APlanet::BeginPlay()
 {
 	if (m_pGravitySphere)
 	{
-		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 5000.0f));
+		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 500.0f));
 	}
 }
 
