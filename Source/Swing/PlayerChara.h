@@ -44,6 +44,9 @@ public:
 	//方向の取得
 	FRotator GetUpRotator();
 
+	UFUNCTION(BlueprintCallable)
+	int GetGraNum();
+
 private:
 	//回転の更新
 	void UpdateRotation(float DeltaTime);
@@ -54,17 +57,16 @@ private:
 //入力
 	//移動
 	void MoveForward(float _value);
-	void MoveForwardKey(float _value);
 	//回転
 	void RotYaw(float _value);
-	void RotYawMouse(float _value);
 	void RotPitch(float _value);
-	void RotPitchMouse(float _value);
 	void RotRoll(float _value);
+	//コリジョンプリセット変更
+	void ChangeCollision();
 
 private:
 	//コリジョン
-	UPROPERTY(EditAnywhere,Category = Collision,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = Collision,meta = (AllowPrivateAccess = "true"))
 	UCapsuleComponent* m_pMainCollision;
 	//メッシュ
 	UPROPERTY(EditAnywhere,Category = Mesh,meta = (AllowPrivateAccess = "true"))

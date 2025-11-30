@@ -78,16 +78,20 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 
 	InputComponent->BindAxis("RightTrigger", this, &APlayerChara::MoveForward);
 	InputComponent->BindAxis("LeftTrigger", this, &APlayerChara::MoveForward);
-	InputComponent->BindAxis("W_Key", this, &APlayerChara::MoveForwardKey);
-	InputComponent->BindAxis("S_Key", this, &APlayerChara::MoveForwardKey);
+	InputComponent->BindAxis("Space", this, &APlayerChara::MoveForward);
+	InputComponent->BindAxis("Right_Ctrl", this, &APlayerChara::MoveForward);
 	InputComponent->BindAxis("LeftStickX", this, &APlayerChara::RotYaw);
-	InputComponent->BindAxis("MouseX", this, &APlayerChara::RotYawMouse);
+	InputComponent->BindAxis("A_Key", this, &APlayerChara::RotYaw);
+	InputComponent->BindAxis("D_Key", this, &APlayerChara::RotYaw);
 	InputComponent->BindAxis("LeftStickY", this, &APlayerChara::RotPitch);
-	InputComponent->BindAxis("MouseY", this, &APlayerChara::RotPitchMouse);
+	InputComponent->BindAxis("W_Key", this, &APlayerChara::RotPitch);
+	InputComponent->BindAxis("S_Key", this, &APlayerChara::RotPitch);
 	InputComponent->BindAxis("RightShoulder", this, &APlayerChara::RotRoll);
 	InputComponent->BindAxis("LeftShoulder", this, &APlayerChara::RotRoll);
-	InputComponent->BindAxis("RightClick", this, &APlayerChara::RotRoll);
-	InputComponent->BindAxis("LeftClick", this, &APlayerChara::RotRoll);
+	InputComponent->BindAxis("E_Key", this, &APlayerChara::RotRoll);
+	InputComponent->BindAxis("Q_Key", this, &APlayerChara::RotRoll);
+
+	InputComponent->BindAction("O_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCollision);
 }
 
 //ティック
@@ -110,7 +114,7 @@ void APlayerChara::BeginPlay()
 	Super::BeginPlay();
 
 	//当たり判定(ここで判定を入れるとすでに重なっているものもbeginが発生)
-	m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
+	//m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -140,6 +144,12 @@ FRotator APlayerChara::GetUpRotator()
 	return UKismetMathLibrary::FindLookAtRotation(FVector(0.0f), GetActorUpVector());
 }
 
+//影響を受けている重力の数を取得
+int APlayerChara::GetGraNum()
+{
+	return m_pPlanets.Num();
+}
+
 //回転の更新
 void APlayerChara::UpdateRotation(float DeltaTime)
 {
@@ -150,9 +160,12 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		//m_pSpringArm->AddLocalRotation(m_Rot * DeltaTime * m_RotSpeedRate);
 
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
-
-
 	}
+
+	//進行方向を向くローターを生成
+	FRotator AddRotator(UKismetMathLibrary::FindLookAtRotation(FVector(), m_MoveDire.GetSafeNormal()));
+
+	m_pSpringArm->SetWorldRotation(AddRotator);
 }
 
 //移動の更新
@@ -197,13 +210,6 @@ void APlayerChara::MoveForward(float _value)
 		m_ForwardInput = _value;
 	}
 }
-void APlayerChara::MoveForwardKey(float _value)
-{
-	if (_value != 0.0f)
-	{
-		m_ForwardInput = _value;
-	}
-}
 
 //回転
 void APlayerChara::RotYaw(float _value)
@@ -220,24 +226,16 @@ void APlayerChara::RotPitch(float _value)
 		m_Rot.Pitch = _value * 0.5f;
 	}
 }
-void APlayerChara::RotYawMouse(float _value)
-{
-	if (_value != 0.0f)
-	{
-		m_Rot.Roll = _value * 0.5f;
-	}
-}
-void APlayerChara::RotPitchMouse(float _value)
-{
-	if (_value != 0.0f)
-	{
-		m_Rot.Pitch = _value * 0.5f;
-	}
-}
 void APlayerChara::RotRoll(float _value)
 {
 	if (_value != 0.0f)
 	{
 		m_Rot.Yaw = _value * 0.5f;
 	}
+}
+
+//コリジョンプリセット変更
+void APlayerChara::ChangeCollision()
+{
+	m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
 }
