@@ -104,6 +104,7 @@ void APlayerChara::Tick(float DeltaTime)
 
 	UE_LOG(LogTemp, Warning, TEXT("%f"), m_MoveDire.Length());
 
+	//is•ûŒü‚Éü‚ğ•\¦
 	FVector AcLoc(GetActorLocation());
 	DrawDebugLine(GetWorld(), AcLoc, AcLoc + m_MoveDire, FColor::Green);
 }
