@@ -4,12 +4,11 @@
 #include "PlayerChara.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Planet.h"
 #include "DrawDebugHelpers.h"
+#include "MyGameInstance.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -43,22 +42,6 @@ APlayerChara::APlayerChara()
 		m_pMesh->SetupAttachment(RootComponent);
 		//メッシュは当たり判定無し
 		m_pMesh->SetCollisionProfileName("AllIgnore");
-	}
-
-	//スプリングアームの生成
-	m_pSpringArm = CreateDefaultSubobject<USpringArmComponent>("m_pSpringArm");
-	if (m_pSpringArm)
-	{
-		//アタッチ
-		m_pSpringArm->SetupAttachment(RootComponent);
-	}
-
-	//カメラ生成
-	m_pCamera = CreateDefaultSubobject<UCameraComponent>("m_pCamera");
-	if (m_pCamera)
-	{
-		//アタッチ
-		m_pCamera->SetupAttachment(m_pSpringArm);
 	}
 
 	//移動コンポーネントの生成
@@ -116,6 +99,9 @@ void APlayerChara::BeginPlay()
 
 	//当たり判定(ここで判定を入れるとすでに重なっているものもbeginが発生)
 	//m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
+
+	//ゲームインスタンスに登録
+	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -139,6 +125,13 @@ void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 	m_pPlanets.Remove(Cast<APlanet>(OtherActor));
 }
 
+//ソケットへの追加
+void APlayerChara::AddSocket(AActor* _p, FVector _Pos)
+{
+	m_pSocket.Add(_p);
+	m_pSocketPos.Add(_Pos);
+}
+
 //上方向の向きの取得
 FRotator APlayerChara::GetUpRotator()
 {
@@ -158,20 +151,25 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	{
 		AddActorLocalRotation(m_Rot * DeltaTime * m_RotSpeedRate);
 
-		//m_pSpringArm->AddLocalRotation(m_Rot * DeltaTime * m_RotSpeedRate);
-
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 
 	//進行方向を向くローターを生成
 	FRotator AddRotator(UKismetMathLibrary::FindLookAtRotation(FVector(), m_MoveDire.GetSafeNormal()));
 
-	m_pSpringArm->SetWorldRotation(AddRotator);
+	//ソケットの回転
+	for (int i = 0; i < m_pSocket.Num(); ++i)
+	{
+		m_pSocket[i]->SetActorRotation(AddRotator);
+	}
 }
 
 //移動の更新
 void APlayerChara::UpdateMove(float DeltaTime)
 {
+	//プレイヤーの位置
+	FVector Loc(GetActorLocation());
+
 	//前進入力のある時
 	if (m_ForwardInput != 0.0f)
 	{
@@ -185,7 +183,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	for (int i = 0; i < m_pPlanets.Num(); ++i)
 	{
 		//星に向かう方向
-		FVector PlanetDire(m_pPlanets[i]->GetActorLocation() - GetActorLocation());
+		FVector PlanetDire(m_pPlanets[i]->GetActorLocation() - Loc);
 
 		//星との距離
 		float Distance(PlanetDire.Length());
@@ -201,6 +199,12 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//AddActorWorldOffset(m_MoveDire * m_ForwardSpeed * DeltaTime);
 
 	AddMovementInput(m_MoveDire,m_MoveDire.Length());
+
+	//ソケットの移動
+	for (int i = 0; i < m_pSocket.Num(); ++i)
+	{
+		m_pSocket[i]->SetActorLocation(Loc + m_pSocketPos[i]);
+	}
 }
 
 //移動

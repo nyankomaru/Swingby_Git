@@ -41,9 +41,13 @@ public:
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
+	//ソケットへの追加
+	void AddSocket(AActor* _p, FVector _Pos);
+
 	//方向の取得
 	FRotator GetUpRotator();
 
+	//重力を受けている物の数
 	UFUNCTION(BlueprintCallable)
 	int GetGraNum();
 
@@ -72,13 +76,6 @@ private:
 	UPROPERTY(EditAnywhere,Category = Mesh,meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_pMesh;
 
-	//スプリングアーム
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* m_pSpringArm;
-	//カメラ
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* m_pCamera;
-
 	//移動コンポーネント
 	UPROPERTY(EditAnywhere,Category = Move,meta = (AllowPrivateAccess = "true"))
 	UFloatingPawnMovement* m_pMovement;
@@ -91,6 +88,10 @@ private:
 	UPROPERTY(EditAnywhere,Category = Speed,meta = (AllowPrivateAccess = "true"))
 	float m_ForwardSpeed;
 
+	UPROPERTY(EditAnywhere, Category = Socket, meta = (AllowPrivateAccess = "true"))
+	TArray<AActor*> m_pSocket;		//付属物の入れ物
+	UPROPERTY(EditAnywhere, Category = Socket, meta = (AllowPrivateAccess = "true"))
+	TArray<FVector> m_pSocketPos;	//付属物の位置
 private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
 

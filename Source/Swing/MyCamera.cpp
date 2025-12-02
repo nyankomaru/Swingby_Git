@@ -15,15 +15,16 @@ AMyCamera::AMyCamera()
 	m_pSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("m_pSpringArm"));
 	if (m_pSpringArm)
 	{
-		//ルートに設定
-		RootComponent = m_pSpringArm;
+		//ルートに接続
+		m_pSpringArm->SetupAttachment(RootComponent);
 	}
 
 	//カメラの生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
 	if (m_pCamera)
 	{
-		m_pCamera->SetupAttachment(RootComponent);
+		//アームに接続
+		m_pCamera->SetupAttachment(m_pSpringArm);
 	}
 
 }

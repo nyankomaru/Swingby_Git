@@ -6,6 +6,9 @@
 #include "Engine/GameInstance.h"
 #include "MyGameInstance.generated.h"
 
+//前方宣言
+class APlayerChara;
+
 /**
  * 
  */
@@ -13,8 +16,12 @@ UCLASS()
 class SWING_API UMyGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
+
+public:
+	//プレイヤー設定・取得
+	void SetPlayer(APlayerChara* _Player);
+	APlayerChara* GetPlayer() const;
 	
 public:
-
-	APawn* m_pPlayer;
+	APlayerChara* m_pPlayer;
 };
