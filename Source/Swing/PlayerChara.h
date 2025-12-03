@@ -12,6 +12,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class APlanet;
 class UFloatingPawnMovement;
+class USpringArmComponent;
+class UCameraComponent;
 
 /**
  * 
@@ -75,6 +77,14 @@ private:
 	//メッシュ
 	UPROPERTY(EditAnywhere,Category = Mesh,meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_pMesh;
+
+	//スプリングアーム
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* m_pSpring;
+
+	//カメラ
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* m_pCamera;
 
 	//移動コンポーネント
 	UPROPERTY(EditAnywhere,Category = Move,meta = (AllowPrivateAccess = "true"))

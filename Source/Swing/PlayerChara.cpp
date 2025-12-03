@@ -9,6 +9,8 @@
 #include "Planet.h"
 #include "DrawDebugHelpers.h"
 #include "MyGameInstance.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -42,6 +44,22 @@ APlayerChara::APlayerChara()
 		m_pMesh->SetupAttachment(RootComponent);
 		//メッシュは当たり判定無し
 		m_pMesh->SetCollisionProfileName("AllIgnore");
+	}
+
+	//スプリングアームの生成
+	m_pSpring = CreateDefaultSubobject<USpringArmComponent>("m_pSpring");
+	if (m_pSpring)
+	{
+		//ルート（コリジョン）にアタッチ
+		m_pSpring->SetupAttachment(RootComponent);
+	}
+
+	//カメラの生成
+	m_pCamera = CreateDefaultSubobject<UCameraComponent>("m_pCamera");
+	if (m_pCamera)
+	{
+		//ルート（コリジョン）にアタッチ
+		m_pCamera->SetupAttachment(m_pSpring);
 	}
 
 	//移動コンポーネントの生成
@@ -85,7 +103,7 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateRotation(DeltaTime);
 	UpdateMove(DeltaTime);
 
-	UE_LOG(LogTemp, Warning, TEXT("%f"), m_MoveDire.Length());
+	UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
 
 	//進行方向に線を表示
 	FVector AcLoc(GetActorLocation());
@@ -157,6 +175,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	//進行方向を向くローターを生成
 	FRotator AddRotator(UKismetMathLibrary::FindLookAtRotation(FVector(), m_MoveDire.GetSafeNormal()));
 
+	m_pSpring->SetWorldRotation(AddRotator);
+
 	//ソケットの回転
 	for (int i = 0; i < m_pSocket.Num(); ++i)
 	{
@@ -203,7 +223,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//ソケットの移動
 	for (int i = 0; i < m_pSocket.Num(); ++i)
 	{
-		m_pSocket[i]->SetActorLocation(Loc + m_pSocketPos[i]);
+		FVector SPos(m_pSocketPos[i]);
+
+		m_pSocket[i]->SetActorLocation(Loc + SPos);
 	}
 }
 

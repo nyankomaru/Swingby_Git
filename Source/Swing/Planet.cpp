@@ -32,7 +32,7 @@ void APlanet::BeginPlay()
 {
 	if (m_pGravitySphere)
 	{
-		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 500.0f));
+		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 200.0f));
 	}
 }
 
