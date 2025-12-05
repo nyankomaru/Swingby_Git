@@ -208,8 +208,6 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 
 		//SetActorRotation(UKismetMathLibrary::MakeRotationFromAxes(MoveDire[0], MoveDire[1], MoveDire[2]));
 
-		SetActorRotation(m_MoveDire.Rotation());
-		AddActorLocalRotation(FRotator(-90.0f, 0.0f, 0.0));
 
 		//SetActorRotation(m_MoveDire.Rotation() + FRotator(0.0f, 90.0f, 0.0f));
 
@@ -219,6 +217,10 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		//次の回転の為にリセット
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
+
+	//進行方向を向かせる
+	SetActorRotation(m_MoveDire.Rotation());
+	AddActorLocalRotation(FRotator(-90.0f, 0.0f, 0.0));
 }
 
 //カメラの回転
@@ -226,42 +228,44 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 {
 	////スプリングアームは進行方向を向かせる
 	////カメラには進行方向を向かせる
-	m_pSpring->SetWorldRotation(m_MoveDire.Rotation());
+	//m_pSpring->SetWorldRotation(m_MoveDire.Rotation());
 
-	////カメラに対する入力がある時は回転させる
-	//if(!m_CameraRotInput.IsZero())
-	//{
-	//	m_CameraRot += m_CameraRotInput * DeltaTime * m_CameraRotSpeed;
-	//	//次の入力に備えてリセット
-	//	m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
-	//}
-	//else
-	//{
-	////カメラの回転入力がある時は視点を任意で回転
-	////ない時は進行方向を向く角度に戻ろうとする
-	//	for (int i = 0; i < 2; ++i)
-	//	{
-	//		//角度が0に近いときは0にする
-	//		/*if (fabsf(*(&(m_CameraRot.Pitch) + i)) < 1.0f)
-	//		{
-	//			*(&(m_CameraRot.Pitch) + i) = 0.0f;
-	//		}
-	//		else
-	//		{
-	//			*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
-	//		}*/
+	//カメラに対する入力がある時は回転させる
+	if(!m_CameraRotInput.IsZero())
+	{
+		m_pSpring->AddLocalRotation(FRotator(m_CameraRotInput.Pitch, m_CameraRotInput.Yaw, 0.0f)*DeltaTime * m_CameraRotSpeed);
 
-	//		if (fabsf(*(&(m_CameraRot.Pitch) + i)) > 1.0)
-	//		{
-	//			*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
-	//		}
-	//		//小さいなら0にする
-	//		else
-	//		{
-	//			*(&(m_CameraRot.Pitch) + i) = 0.0f;
-	//		}
-	//	}
-	//}
+		m_CameraRot += m_CameraRotInput * DeltaTime * m_CameraRotSpeed;
+		//次の入力に備えてリセット
+		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
+	}
+	else
+	{
+	//カメラの回転入力がある時は視点を任意で回転
+	//ない時は進行方向を向く角度に戻ろうとする
+		for (int i = 0; i < 2; ++i)
+		{
+			//角度が0に近いときは0にする
+			/*if (fabsf(*(&(m_CameraRot.Pitch) + i)) < 1.0f)
+			{
+				*(&(m_CameraRot.Pitch) + i) = 0.0f;
+			}
+			else
+			{
+				*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
+			}*/
+
+			if (fabsf(*(&(m_CameraRot.Pitch) + i)) > 1.0)
+			{
+				*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
+			}
+			//小さいなら0にする
+			else
+			{
+				*(&(m_CameraRot.Pitch) + i) = 0.0f;
+			}
+		}
+	}
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
 
