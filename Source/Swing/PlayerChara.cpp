@@ -19,6 +19,7 @@ APlayerChara::APlayerChara()
 	, m_CameraRot(0.0f)
 	, m_CameraRotInput(0.0f)
 	, m_ForwardInput(0.0f)
+	, m_ChangeCtrl(0.0f)
 {
 
 	//コリジョンを生成
@@ -104,7 +105,7 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	InputComponent->BindAxis("Up_Key", this, &APlayerChara::CameraRotYaw);
 	InputComponent->BindAxis("Down_Key", this, &APlayerChara::CameraRotYaw);
 	//操作変更
-	InputComponent->BindAxis("Letf_Ctrl", this, &APlayerChara::ChangeCtrl);
+	InputComponent->BindAxis("Left_Ctrl", this, &APlayerChara::ChangeCtrl);
 
 	InputComponent->BindAction("O_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCollision);
 }
@@ -230,46 +231,39 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	////カメラには進行方向を向かせる
 	//m_pSpring->SetWorldRotation(m_MoveDire.Rotation());
 
+	UE_LOG(LogTemp, Warning, TEXT("%f"), m_ChangeCtrl);
+
 	//カメラに対する入力がある時は回転させる
+	//ない時は進行方向を向く角度に戻ろうとする
 	if(!m_CameraRotInput.IsZero())
 	{
-		m_pSpring->AddLocalRotation(FRotator(m_CameraRotInput.Pitch, m_CameraRotInput.Yaw, 0.0f)*DeltaTime * m_CameraRotSpeed);
+		//操作変更入力がないときは通常の回転
+		if(m_ChangeCtrl > 0.0f)
+		{
+			m_pCamera->AddLocalRotation(m_CameraRotInput * DeltaTime * m_CameraRotSpeed);
+			//if (((FVector2D)m_pSpring->GetForwardVector() - FVector2D(0.0f, 0.0f)) <= 1.0f)
+			{
 
-		m_CameraRot += m_CameraRotInput * DeltaTime * m_CameraRotSpeed;
+			}
+
+			m_ChangeCtrl = 0.0f;
+		}
+		else
+		{
+			m_pSpring->SetWorldRotation(m_pSpring->GetForwardVector().RotateAngleAxis(m_CameraRotInput.Yaw * DeltaTime * m_CameraRotSpeed,m_pMesh->GetForwardVector()).Rotation());
+			m_pSpring->AddLocalRotation(FRotator(m_CameraRotInput.Pitch * DeltaTime * m_CameraRotSpeed,0.0f,0.0f));
+		}
+
 		//次の入力に備えてリセット
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	else
 	{
-	//カメラの回転入力がある時は視点を任意で回転
-	//ない時は進行方向を向く角度に戻ろうとする
-		for (int i = 0; i < 2; ++i)
-		{
-			//角度が0に近いときは0にする
-			/*if (fabsf(*(&(m_CameraRot.Pitch) + i)) < 1.0f)
-			{
-				*(&(m_CameraRot.Pitch) + i) = 0.0f;
-			}
-			else
-			{
-				*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
-			}*/
-
-			if (fabsf(*(&(m_CameraRot.Pitch) + i)) > 1.0)
-			{
-				*(&(m_CameraRot.Pitch) + i) += ((*(&m_CameraRot.Pitch + i) > 0.0f) ? -DeltaTime : DeltaTime) * m_CameraReturnRotSpeed;
-			}
-			//小さいなら0にする
-			else
-			{
-				*(&(m_CameraRot.Pitch) + i) = 0.0f;
-			}
-		}
+		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), m_MoveDire.Rotation(), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
+		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
 	}
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
-
-	//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), m_MoveDire.Rotation(), DeltaTime,1.0f));
 }
 
 //入力有効時のカメラの回転
@@ -310,13 +304,13 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
 	}
 
-	AddMovementInput(m_MoveDire,m_MoveDire.Length());
+	//AddMovementInput(m_MoveDire,m_MoveDire.Length() * DeltaTime);
+	ControlInputVector += m_MoveDire;
 
 	//ソケットの移動
 	for (int i = 0; i < m_pSocket.Num(); ++i)
 	{
 		FVector SPos(m_pSocketPos[i]);
-
 		m_pSocket[i]->SetActorLocation(Loc + GetActorRightVector() * SPos.X + GetActorForwardVector() * -1.0f * SPos.Y + GetActorUpVector() * SPos.Z);
 	}
 }
@@ -372,7 +366,7 @@ void APlayerChara::CameraRotPitch(float _value)
 //操作変更
 void APlayerChara::ChangeCtrl(float _value)
 {
-	m_bChangeCtrl = (bool)_value;
+	m_ChangeCtrl = _value;
 }
 
 //コリジョンプリセット変更

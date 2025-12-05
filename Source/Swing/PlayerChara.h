@@ -129,10 +129,11 @@ private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
 
 	FVector m_MoveDire;		//進行方向
+	FVector m_PreLoc;		//ひとつ前の位置
 	FRotator m_Rot;			//回転角度
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度
 
-	bool m_bChangeCtrl;
+	float m_ChangeCtrl;
 };
