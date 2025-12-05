@@ -76,6 +76,9 @@ private:
 	void CameraRotPitch(float _value);
 	void CameraRotYaw(float _value);
 
+	//操作変更
+	void ChangeCtrl(float _value);
+
 	//コリジョンプリセット変更
 	void ChangeCollision();
 
@@ -130,4 +133,6 @@ private:
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度
+
+	bool m_bChangeCtrl;
 };
