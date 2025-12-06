@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "MyGameInstance.h"
+#include "PlayerChara.h"
 
 // Sets default values
 AMyCamera::AMyCamera()
@@ -36,7 +37,7 @@ void AMyCamera::BeginPlay()
 	Super::BeginPlay();
 
 	//ゲームインスタンスに登録
-	GetGameInstance<UMyGameInstance>()->GetPlayer();
+	GetGameInstance<UMyGameInstance>()->GetPlayer()->~APlayerChara();
 	
 }
 
