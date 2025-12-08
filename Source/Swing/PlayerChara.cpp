@@ -20,6 +20,7 @@ APlayerChara::APlayerChara()
 	, m_CameraRotInput(0.0f)
 	, m_ForwardInput(0.0f)
 	, m_ChangeCtrl(0.0f)
+	, m_Speed(0.0f)
 {
 
 	//コリジョンを生成
@@ -178,6 +179,13 @@ int APlayerChara::GetGraNum()
 	return m_pPlanets.Num();
 }
 
+//速度の取得
+float APlayerChara::GetSpeed()
+{
+	//return m_Speed;
+	return m_pMovement->Velocity.Length();
+}
+
 //回転の更新
 void APlayerChara::UpdateRotation(float DeltaTime)
 {
@@ -231,8 +239,6 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	////カメラには進行方向を向かせる
 	//m_pSpring->SetWorldRotation(m_MoveDire.Rotation());
 
-	UE_LOG(LogTemp, Warning, TEXT("%f"), m_ChangeCtrl);
-
 	//カメラに対する入力がある時は回転させる
 	//ない時は進行方向を向く角度に戻ろうとする
 	if(!m_CameraRotInput.IsZero())
@@ -278,34 +284,46 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//プレイヤーの位置
 	FVector Loc(GetActorLocation());
 
+
 	//前進入力のある時
 	if (m_ForwardInput != 0.0f)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%f"), m_ForwardInput);
 		m_MoveDire = m_MoveDire + m_pMesh->GetUpVector() * m_ForwardInput * m_ForwardSpeed;
+
+		AddMovementInput(m_pMesh->GetUpVector(), m_ForwardInput * m_ForwardSpeed);
 
 		//次の入力の為にリセット
 		m_ForwardInput = 0.0f;
 	}
 
-	//重力を受ける対象分
-	for (int i = 0; i < m_pPlanets.Num(); ++i)
+	//重力を受けている時の処理
+	if (m_pPlanets.Num() != 0)
 	{
-		//星に向かう方向
-		FVector PlanetDire(m_pPlanets[i]->GetActorLocation() - Loc);
+		//進行方向
+		FVector MoveDire(0.0f, 0.0f, 0.0f);
+		//各重力減に引っ張られる
+		for (int i = 0; i < m_pPlanets.Num(); ++i)
+		{
+			//星に向かう方向
+			FVector PlanetDire(m_pPlanets[i]->GetActorLocation() - Loc);
+			//星との距離
+			float Distance(PlanetDire.Length());
+			//向かう強さ(近いほど設定した値に近くなる)
+			float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius()));
 
-		//星との距離
-		float Distance(PlanetDire.Length());
+			//進行方向に足す
+			MoveDire += PlanetDire.GetSafeNormal() * Gravity;
+			//m_MoveDire = m_MoveDire + PlanetDire.GetSafeNormal() * Gravity;
+			//AddMovementInput(m_MoveDire, m_MoveDire.Length() * DeltaTime);
 
-		//向かう強さ(近いほど設定した値に近くなる)
-		float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius()));
-
-		m_MoveDire = m_MoveDire + PlanetDire.GetSafeNormal() * Gravity;
-
-		//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
+			//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
+		}
+		//移動の反映
+		AddMovementInput(MoveDire.GetSafeNormal(),MoveDire.Length());
 	}
 
-	//AddMovementInput(m_MoveDire,m_MoveDire.Length() * DeltaTime);
-	ControlInputVector += m_MoveDire;
+	//ControlInputVector += m_MoveDire;
 
 	//ソケットの移動
 	for (int i = 0; i < m_pSocket.Num(); ++i)
@@ -313,6 +331,13 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		FVector SPos(m_pSocketPos[i]);
 		m_pSocket[i]->SetActorLocation(Loc + GetActorRightVector() * SPos.X + GetActorForwardVector() * -1.0f * SPos.Y + GetActorUpVector() * SPos.Z);
 	}
+
+	//移動後の位置
+	Loc = GetActorLocation();
+	//速度の変更
+	m_Speed = (Loc - m_PreLoc).Length() / DeltaTime;
+	//前回位置の保存
+	m_PreLoc = Loc;
 }
 
 //移動

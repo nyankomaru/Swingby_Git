@@ -20,6 +20,7 @@ class SWING_API UMyGameInstance : public UGameInstance
 public:
 	//プレイヤー設定・取得
 	void SetPlayer(APlayerChara* _Player);
+	UFUNCTION(BlueprintCallable)
 	APlayerChara* GetPlayer() const;
 	
 public:

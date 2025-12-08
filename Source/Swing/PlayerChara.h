@@ -49,9 +49,13 @@ public:
 	//方向の取得
 	FRotator GetUpRotator();
 
-	//重力を受けている物の数
+	//重力を受けている物の数の取得
 	UFUNCTION(BlueprintCallable)
 	int GetGraNum();
+
+	//速度の取得
+	UFUNCTION(BlueprintCallable)
+	float GetSpeed();
 
 private:
 	//回転の更新
@@ -134,6 +138,7 @@ private:
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度
+	float m_Speed;		//移動速度
 
 	float m_ChangeCtrl;
 };
