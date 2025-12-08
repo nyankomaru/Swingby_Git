@@ -291,7 +291,10 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("%f"), m_ForwardInput);
 		m_MoveDire = m_MoveDire + m_pMesh->GetUpVector() * m_ForwardInput * m_ForwardSpeed;
 
-		AddMovementInput(m_pMesh->GetUpVector(), m_ForwardInput * m_ForwardSpeed);
+		//速度の変更
+		m_pMovement->Acceleration = m_ForwardSpeed;
+		//メッシュの頭方向に移動
+		AddMovementInput(m_pMesh->GetUpVector());
 
 		//次の入力の為にリセット
 		m_ForwardInput = 0.0f;
@@ -319,8 +322,10 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 			//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
 		}
+		//速度変更
+		m_pMovement->Acceleration = MoveDire.Length();
 		//移動の反映
-		AddMovementInput(MoveDire.GetSafeNormal(),MoveDire.Length());
+		AddMovementInput(MoveDire.GetSafeNormal());
 	}
 
 	//ControlInputVector += m_MoveDire;
