@@ -27,22 +27,9 @@ APlayerChara::APlayerChara()
 	m_pSceneComp = CreateDefaultSubobject<USceneComponent>("m_pSceneComp");
 	if (m_pSceneComp)
 	{
+		//これをルートとして他をまとめて操作
 		RootComponent = m_pSceneComp;
 	}
-
-	//コリジョンを生成
-	//m_pMainCollision = CreateDefaultSubobject<UCapsuleComponent>("m_pMainCollision");
-	//if (m_pMainCollision)
-	//{
-	//	//ルートに設定
-	//	//RootComponent = m_pMainCollision;
-	//	m_pMainCollision->SetSimulatePhysics(false);
-	//	//当たり判定(ここでは全部無視)
-	//	m_pMainCollision->SetCollisionProfileName("AllIgnore");
-	//	//重力無効
-	//	m_pMainCollision->SetEnableGravity(false);
-	//}
-
 	//メッシュを生成
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -50,36 +37,34 @@ APlayerChara::APlayerChara()
 		//ルート（コリジョン）にアタッチ
 		m_pMesh->SetupAttachment(RootComponent);
 		//オーバーラップイベントの有効化・登録
+		//メッシュのコリジョンで判定を行う
 		m_pMesh->SetGenerateOverlapEvents(true);
 		m_pMesh->OnComponentBeginOverlap.AddDynamic(this, &APlayerChara::OnOverlapBegin);
 		m_pMesh->OnComponentEndOverlap.AddDynamic(this, &APlayerChara::OnOverlapEnd);
-		//メッシュは当たり判定無し
+		//当たり判定(ここでは全部無視)
 		m_pMesh->SetCollisionProfileName("AllIgnore");
+		//重力の影響は受けない
+		m_pMesh->SetEnableGravity(false);
 	}
-
 	//スプリングアームの生成
 	m_pSpring = CreateDefaultSubobject<USpringArmComponent>("m_pSpring");
 	if (m_pSpring)
 	{
 		//ルート（コリジョン）にアタッチ
 		m_pSpring->SetupAttachment(RootComponent);
-		//回転は本体に引っ張られない
-		//m_pSpring->SetUsingAbsoluteRotation(true);
 	}
-
 	//カメラの生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>("m_pCamera");
 	if (m_pCamera)
 	{
-		//ルート（コリジョン）にアタッチ
+		//アームにくっつける
 		m_pCamera->SetupAttachment(m_pSpring);
 	}
-
 	//移動コンポーネントの生成
 	m_pMovement = CreateDefaultSubobject<UFloatingPawnMovement>("m_pMovement");
 	if (m_pMovement)
 	{
-		m_pMovement->Acceleration = 1.0f;
+
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_Rot.Pitch);
@@ -114,7 +99,7 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	InputComponent->BindAxis("Down_Key", this, &APlayerChara::CameraRotYaw);
 	//操作変更
 	InputComponent->BindAxis("Left_Ctrl", this, &APlayerChara::ChangeCtrl);
-
+	//コリジョン変更
 	InputComponent->BindAction("O_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCollision);
 }
 
@@ -222,11 +207,6 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 			MoveDire[i] = MoveDire[i].RotateAngleAxis(90.0f, RotAxis[0]);
 		}
 
-		//SetActorRotation(UKismetMathLibrary::MakeRotationFromAxes(MoveDire[0], MoveDire[1], MoveDire[2]));
-
-
-		//SetActorRotation(m_MoveDire.Rotation() + FRotator(0.0f, 90.0f, 0.0f));
-
 		//ずらした中心を戻す
 		AddActorLocalOffset(-m_RotPivot);
 
@@ -236,16 +216,11 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 
 	//進行方向を向かせる
 	SetActorRotation(m_pMovement->Velocity.Rotation());
-	//AddActorLocalRotation(FRotator(-90.0f, 0.0f, 0.0));
 }
 
 //カメラの回転
 void APlayerChara::UpdateCameraRot(float DeltaTime)
 {
-	////スプリングアームは進行方向を向かせる
-	////カメラには進行方向を向かせる
-	//m_pSpring->SetWorldRotation(m_MoveDire.Rotation());
-
 	//カメラに対する入力がある時は回転させる
 	//ない時は進行方向を向く角度に戻ろうとする
 	if(!m_CameraRotInput.IsZero())
@@ -263,7 +238,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		}
 		else
 		{
-			m_pSpring->SetWorldRotation(m_pSpring->GetForwardVector().RotateAngleAxis(m_CameraRotInput.Yaw * DeltaTime * m_CameraRotSpeed,m_pMesh->GetForwardVector()).Rotation());
+			m_pSpring->AddRelativeRotation(FRotator(0.0f, m_CameraRotInput.Yaw * DeltaTime * m_CameraRotSpeed,0.0f));
 			m_pSpring->AddLocalRotation(FRotator(m_CameraRotInput.Pitch * DeltaTime * m_CameraRotSpeed,0.0f,0.0f));
 		}
 
@@ -272,8 +247,8 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	}
 	else
 	{
-		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
-		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
+		m_pSpring->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetRelativeRotation(),FRotator(0.0f,0.0f,0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
+		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
 	}
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
@@ -335,9 +310,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		AddMovementInput(MoveDire.GetSafeNormal());
 	}
 
-	//ControlInputVector += m_MoveDire;
-
 	//ソケットの移動
+	//ソケットにモノが入っているならばそれらはまとめて移動
 	for (int i = 0; i < m_pSocket.Num(); ++i)
 	{
 		FVector SPos(m_pSocketPos[i]);
@@ -346,7 +320,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 	//移動後の位置
 	Loc = GetActorLocation();
-	//速度の変更
+	//速度の更新
 	m_Speed = (Loc - m_PreLoc).Length() / DeltaTime;
 	//前回位置の保存
 	m_PreLoc = Loc;
