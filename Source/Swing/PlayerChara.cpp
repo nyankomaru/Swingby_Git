@@ -23,22 +23,25 @@ APlayerChara::APlayerChara()
 	, m_Speed(0.0f)
 {
 
-	//コリジョンを生成
-	m_pMainCollision = CreateDefaultSubobject<UCapsuleComponent>("m_pMainCollision");
-	if (m_pMainCollision)
+	//ルートを生成
+	m_pSceneComp = CreateDefaultSubobject<USceneComponent>("m_pSceneComp");
+	if (m_pSceneComp)
 	{
-		//ルートに設定
-		RootComponent = m_pMainCollision;
-		m_pMainCollision->SetSimulatePhysics(false);
-		//当たり判定(ここでは全部無視)
-		m_pMainCollision->SetCollisionProfileName("AllIgnore");
-		//重力無効
-		m_pMainCollision->SetEnableGravity(false);
-		//オーバーラップイベントの有効化・登録
-		m_pMainCollision->SetGenerateOverlapEvents(true);
-		m_pMainCollision->OnComponentBeginOverlap.AddDynamic(this, &APlayerChara::OnOverlapBegin);
-		m_pMainCollision->OnComponentEndOverlap.AddDynamic(this, &APlayerChara::OnOverlapEnd);
+		RootComponent = m_pSceneComp;
 	}
+
+	//コリジョンを生成
+	//m_pMainCollision = CreateDefaultSubobject<UCapsuleComponent>("m_pMainCollision");
+	//if (m_pMainCollision)
+	//{
+	//	//ルートに設定
+	//	//RootComponent = m_pMainCollision;
+	//	m_pMainCollision->SetSimulatePhysics(false);
+	//	//当たり判定(ここでは全部無視)
+	//	m_pMainCollision->SetCollisionProfileName("AllIgnore");
+	//	//重力無効
+	//	m_pMainCollision->SetEnableGravity(false);
+	//}
 
 	//メッシュを生成
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
@@ -46,6 +49,10 @@ APlayerChara::APlayerChara()
 	{
 		//ルート（コリジョン）にアタッチ
 		m_pMesh->SetupAttachment(RootComponent);
+		//オーバーラップイベントの有効化・登録
+		m_pMesh->SetGenerateOverlapEvents(true);
+		m_pMesh->OnComponentBeginOverlap.AddDynamic(this, &APlayerChara::OnOverlapBegin);
+		m_pMesh->OnComponentEndOverlap.AddDynamic(this, &APlayerChara::OnOverlapEnd);
 		//メッシュは当たり判定無し
 		m_pMesh->SetCollisionProfileName("AllIgnore");
 	}
@@ -57,7 +64,7 @@ APlayerChara::APlayerChara()
 		//ルート（コリジョン）にアタッチ
 		m_pSpring->SetupAttachment(RootComponent);
 		//回転は本体に引っ張られない
-		m_pSpring->SetUsingAbsoluteRotation(true);
+		//m_pSpring->SetUsingAbsoluteRotation(true);
 	}
 
 	//カメラの生成
@@ -228,8 +235,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	}
 
 	//進行方向を向かせる
-	SetActorRotation(m_MoveDire.Rotation());
-	AddActorLocalRotation(FRotator(-90.0f, 0.0f, 0.0));
+	SetActorRotation(m_pMovement->Velocity.Rotation());
+	//AddActorLocalRotation(FRotator(-90.0f, 0.0f, 0.0));
 }
 
 //カメラの回転
@@ -265,8 +272,8 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	}
 	else
 	{
-		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), m_MoveDire.Rotation(), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
-		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
+		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
+		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed * DeltaTime));
 	}
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
@@ -294,7 +301,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//速度の変更
 		m_pMovement->Acceleration = m_ForwardSpeed;
 		//メッシュの頭方向に移動
-		AddMovementInput(m_pMesh->GetUpVector());
+		AddMovementInput(m_pMesh->GetForwardVector());
 
 		//次の入力の為にリセット
 		m_ForwardInput = 0.0f;
@@ -320,7 +327,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//m_MoveDire = m_MoveDire + PlanetDire.GetSafeNormal() * Gravity;
 			//AddMovementInput(m_MoveDire, m_MoveDire.Length() * DeltaTime);
 
-			//UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
+			UE_LOG(LogTemp,Warning, TEXT("%i"), m_pPlanets.Num());
 		}
 		//速度変更
 		m_pMovement->Acceleration = MoveDire.Length();
@@ -402,5 +409,5 @@ void APlayerChara::ChangeCtrl(float _value)
 //コリジョンプリセット変更
 void APlayerChara::ChangeCollision()
 {
-	m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
+	m_pMesh->SetCollisionProfileName("MyBlockDynamic");
 }
