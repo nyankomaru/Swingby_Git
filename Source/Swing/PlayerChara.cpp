@@ -24,19 +24,18 @@ APlayerChara::APlayerChara()
 {
 
 	//ルートを生成
-	//m_pSceneComp = CreateDefaultSubobject<USceneComponent>("m_pSceneComp");
-	//if (m_pSceneComp)
-	//{
-	//	//これをルートとして他をまとめて操作
-	//	RootComponent = m_pSceneComp;
-	//}
+	m_pSceneComp = CreateDefaultSubobject<USceneComponent>("m_pSceneComp");
+	if (m_pSceneComp)
+	{
+		//これをルートとして他をまとめて操作
+		RootComponent = m_pSceneComp;
+	}
 	//メッシュを生成
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
 	{
 		//ルート（コリジョン）にアタッチ
-		//m_pMesh->SetupAttachment(RootComponent);
-		RootComponent = m_pMesh;
+		m_pMesh->SetupAttachment(RootComponent);
 		//オーバーラップイベントの有効化・登録
 		//メッシュのコリジョンで判定を行う
 		m_pMesh->SetGenerateOverlapEvents(true);
@@ -126,7 +125,7 @@ void APlayerChara::BeginPlay()
 	Super::BeginPlay();
 
 	//当たり判定(ここで判定を入れるとすでに重なっているものもbeginが発生)
-	//m_pMesh->SetCollisionProfileName("MyBlockDynamic");
+	//m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
 
 	//ゲームインスタンスに登録
 	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
@@ -252,6 +251,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//進行方向に引力を足す
 			MoveDire += PlanetDire.GetSafeNormal() * Gravity;
 
+			//重力影響数確認
+			//UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
 		}
 	}
 	//速度の変更
@@ -273,9 +274,6 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	m_Speed = (Loc - m_PreLoc).Length() / DeltaTime;
 	//前回位置の保存
 	m_PreLoc = Loc;
-
-	//重力影響数確認
-	UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
 }
 
 //カメラの更新

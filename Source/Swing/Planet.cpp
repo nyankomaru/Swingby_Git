@@ -11,7 +11,7 @@ APlanet::APlanet()
 	if (m_pMainCollision)
 	{
 		//最初は全無視
-		m_pMainCollision->SetCollisionProfileName("MyBlockStatic");
+		m_pMainCollision->SetCollisionProfileName("AllIgnore");
 	}
 
 	//重力範囲の生成
@@ -30,6 +30,12 @@ APlanet::APlanet()
 
 void APlanet::BeginPlay()
 {
+	//スタート時衝突を行うように変更
+	if (m_pMainCollision)
+	{
+		m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
+	}
+
 	if (m_pGravitySphere)
 	{
 		m_pGravitySphere->SetRelativeScale3D(FVector(m_Gravity * 600.0f));
