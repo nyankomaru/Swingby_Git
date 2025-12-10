@@ -63,9 +63,12 @@ private:
 	//移動の更新
 	void UpdateMove(float DeltaTime);
 
+	//カメラの更新
+	void UpdateCamera(float DeltaTime);
 	//カメラの回転
 	void UpdateCameraRot(float DeltaTime);
-	void RotationCamera(float DeltaTime);
+	//カメラの画角の変更
+	void UpdateCameraFOV(float DeltaTime);
 
 private:
 //入力
@@ -119,9 +122,12 @@ private:
 	UPROPERTY(EditAnywhere,Category = Speed,meta = (AllowPrivateAccess = "true"))
 	float m_ForwardSpeed;
 
-	//回転速度の倍率
+	//回転速度
 	UPROPERTY(EditAnywhere,Category = Rotation,meta = (AllowPrivateAccess = "true"))
-	float m_RotSpeedRate;
+	float m_RotSpeed;
+	//進行方向に戻る回転速度
+	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
+	float m_ReturnRotSpeed;
 	//回転の重心
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
 	FVector m_RotPivot;
