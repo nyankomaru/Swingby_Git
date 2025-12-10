@@ -35,10 +35,6 @@ AMyCamera::AMyCamera()
 void AMyCamera::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//ゲームインスタンスに登録
-	/*GetGameInstance<UMyGameInstance>()->GetPlayer()->~APlayerChara();*/
-	
 }
 
 // Called every frame

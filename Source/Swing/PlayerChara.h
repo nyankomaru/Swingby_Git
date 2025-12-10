@@ -90,9 +90,6 @@ private:
 	void ChangeCollision();
 
 private:
-	//シーンコンポーネント(Rootにする)
-	UPROPERTY(EditAnywhere,Category = Component,meta = (AllowPrivateAccess = "true"))
-	USceneComponent* m_pSceneComp;
 
 	//コリジョン
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = Collision,meta = (AllowPrivateAccess = "true"))

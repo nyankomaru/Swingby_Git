@@ -22,20 +22,12 @@ APlayerChara::APlayerChara()
 	, m_ChangeCtrl(0.0f)
 	, m_Speed(0.0f)
 {
-
-	//ルートを生成
-	m_pSceneComp = CreateDefaultSubobject<USceneComponent>("m_pSceneComp");
-	if (m_pSceneComp)
-	{
-		//これをルートとして他をまとめて操作
-		RootComponent = m_pSceneComp;
-	}
-	//メッシュを生成
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
 	{
-		//ルート（コリジョン）にアタッチ
-		m_pMesh->SetupAttachment(RootComponent);
+		//ルートにする
+		//コリジョン持ちがルートじゃないと衝突が起こっても止まらない（仮定）
+		RootComponent = m_pMesh;
 		//オーバーラップイベントの有効化・登録
 		//メッシュのコリジョンで判定を行う
 		m_pMesh->SetGenerateOverlapEvents(true);
@@ -280,7 +272,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 void APlayerChara::UpdateCamera(float DeltaTime)
 {
 	UpdateCameraRot(DeltaTime);
-	//UpdateCameraFOV(DeltaTime);
+	UpdateCameraFOV(DeltaTime);
 }
 
 //カメラの回転
@@ -323,12 +315,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	m_pCamera->FieldOfView = m_pCamera->FieldOfView + m_pMovement->Velocity.Length() * 0.000001f;
-
-	if (m_pCamera->FieldOfView > 120.0f)
-	{
-		m_pCamera->FieldOfView = 120.0f;
-	}
+	m_pCamera->FieldOfView = 75.0f + m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed * 0.75f) * 75.0f;
 }
 
 //移動
