@@ -44,7 +44,12 @@ public:
 
 public:
 	//ソケットへの追加
-	void AddSocket(AActor* _p, FVector _Pos);
+	//設定しない限り回転はしない
+	UFUNCTION(BlueprintCallable)
+	void AddSocket(AActor* _p, FVector _Pos,bool _bRot = false);
+	//ソケットからの除外
+	UFUNCTION(BlueprintCallable)
+	void RemoveSocket(AActor* _p);
 
 	//方向の取得
 	FRotator GetUpRotator();
@@ -69,6 +74,9 @@ private:
 	void UpdateCameraRot(float DeltaTime);
 	//カメラの画角の変更
 	void UpdateCameraFOV(float DeltaTime);
+
+	//ソケットの更新
+	void UpdateSocket();
 
 private:
 //入力
@@ -129,15 +137,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
 	FVector m_RotPivot;
 
-	//付属物の入れ物
-	UPROPERTY(EditAnywhere, Category = Socket, meta = (AllowPrivateAccess = "true"))
-	TArray<AActor*> m_pSocket;
-	//付属物の位置
-	UPROPERTY(EditAnywhere, Category = Socket, meta = (AllowPrivateAccess = "true"))
-	TArray<FVector> m_pSocketPos;
-
 private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
+
+	TArray<AActor*> m_pSocket;	//付属物の入れ物
+	TArray<FVector> m_SocketPos;	//付属物の位置
+	TArray<bool> m_bSocketRot;	//付属物が追従回転するかどうかを示す
 
 	FVector m_MoveDire;		//進行方向
 	FVector m_PreLoc;		//ひとつ前の位置

@@ -103,6 +103,7 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateRotation(DeltaTime);
 	UpdateMove(DeltaTime);
 	UpdateCamera(DeltaTime);
+	UpdateSocket();
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
 
@@ -145,10 +146,23 @@ void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 }
 
 //ソケットへの追加
-void APlayerChara::AddSocket(AActor* _p, FVector _Pos)
+void APlayerChara::AddSocket(AActor* _p, FVector _Pos,bool _bRot)
 {
-	m_pSocket.Add(_p);
-	m_pSocketPos.Add(_Pos);
+	//pがないと処理しない
+	if (_p)
+	{
+		m_pSocket.Add(_p);
+		m_SocketPos.Add(_Pos);
+		m_bSocketRot.Add(_bRot);
+	}
+}
+//ソケットからの除外
+void APlayerChara::RemoveSocket(AActor* _p)
+{
+	if (_p)
+	{
+		//m_pSocket.Get
+	}
 }
 
 //上方向の向きの取得
@@ -173,8 +187,7 @@ float APlayerChara::GetSpeed()
 //回転の更新
 void APlayerChara::UpdateRotation(float DeltaTime)
 {
-	//入力がある時には動かせる
-	//ないときには勝手に回転する
+	//回転入力がある時には動かせる
 	if(!m_Rot.IsZero())
 	{
 		//重心に中心を合わせる
@@ -201,7 +214,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		//次の回転の為にリセット
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
-	else
+	//前進入力がない時は勝手に回転する
+	else if(m_ForwardInput == 0.0f)
 	{
 		//進行方向に徐々に向かせる
 		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
@@ -246,19 +260,15 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//重力影響数確認
 			//UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
 		}
+
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), (m_pPlanets[0]->GetGravity() * (1.0f - (m_pPlanets[0]->GetActorLocation() - Loc).Length() / m_pPlanets[0]->GetGradius())));
+		//UE_LOG(LogTemp, Warning, TEXT("%f , %f , %f"), (m_pPlanets[0]->GetActorLocation() - Loc).Length(),m_pPlanets[0]->GetGradius(), m_pPlanets[0]->GetGravity());
 	}
+
 	//速度の変更
 	m_pMovement->Acceleration = MoveDire.Length();
 	//移動の反映
 	AddMovementInput(MoveDire.GetSafeNormal());
-
-	//ソケットの移動
-	//ソケットにモノが入っているならばそれらはまとめて移動
-	for (int i = 0; i < m_pSocket.Num(); ++i)
-	{
-		FVector SPos(m_pSocketPos[i]);
-		m_pSocket[i]->SetActorLocation(Loc + GetActorRightVector() * SPos.X + GetActorForwardVector() * -1.0f * SPos.Y + GetActorUpVector() * SPos.Z);
-	}
 
 	//移動後の位置
 	Loc = GetActorLocation();
@@ -317,6 +327,25 @@ void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
 	m_pCamera->FieldOfView = 75.0f + m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed * 0.75f) * 75.0f;
 }
+
+//ソケットの更新
+void APlayerChara::UpdateSocket()
+{
+	//ソケットの移動
+	//ソケットにモノが入っているならばそれらはまとめて移動
+	for (int i = 0; i < m_pSocket.Num(); ++i)
+	{
+		FVector SPos(m_SocketPos[i]);
+		m_pSocket[i]->SetActorLocation(GetActorLocation() + GetActorRightVector() * SPos.X + GetActorForwardVector() * -1.0f * SPos.Y + GetActorUpVector() * SPos.Z);
+
+		//モノにより回転
+		if (m_bSocketRot[i])
+		{
+			m_pSocket[i]->SetActorRotation(GetActorRotation());
+		}
+	}
+}
+
 
 //移動
 void APlayerChara::MoveForward(float _value)
