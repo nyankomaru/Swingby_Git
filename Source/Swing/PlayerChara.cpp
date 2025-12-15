@@ -221,17 +221,16 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 //移動の更新
 void APlayerChara::UpdateMove(float DeltaTime)
 {
-	//プレイヤーの位置
-	FVector Loc(GetActorLocation());
-	//進行方向
-	FVector MoveDire(0.0f, 0.0f, 0.0f);
+	FVector Loc(GetActorLocation());		//プレイヤーの位置
+	FVector AddMoveDire(0.0f, 0.0f, 0.0f);		//足す進行方向
+	FVector NowModeDire(m_pMovement->Velocity);	//現在の進行方向
 
 	//前進入力のある時
 	if (m_ForwardInput != 0.0f)
 	{
 		//移動方向に前進を加算
 		//m_ForwardInputは前後を決める
-		MoveDire += m_pMesh->GetForwardVector() * m_ForwardInput * m_ForwardSpeed;
+		AddMoveDire += m_pMesh->GetForwardVector() * m_ForwardInput * m_ForwardSpeed;
 
 		//次の入力の為にリセット
 		m_ForwardInput = 0.0f;
@@ -266,14 +265,26 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius());
 			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * UKismetMathLibrary::Dot_VectorVector(m_pMovement->Velocity, PlanetDire.RotateAngleAxis(90.0f,m_pMesh->GetUpVector()));
 
-			//重力影響数確認
-			//UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
+			//
+			FVector XVec(UKismetMathLibrary::Cross_VectorVector(PlanetDire,NowModeDire).GetSafeNormal());
+			FVector YVec(UKismetMathLibrary::Cross_VectorVector(PlanetDire, XVec).GetSafeNormal());
+			//星との平行な移動量（縦横）
+			float X(fabs(UKismetMathLibrary::Dot_VectorVector(XVec, NowModeDire)));
+			float Y(fabs(UKismetMathLibrary::Dot_VectorVector(YVec, NowModeDire)));
+			//星に平行な移動量
+			float ParallelMove(sqrtf(X * X + Y * Y));
+
+			CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * ParallelMove * (Distance / m_pPlanets[i]->GetGradius());
+
 			//星平行方向
-			DrawDebugLine(GetWorld(), Loc, Loc + PlanetDire.RotateAngleAxis(90.0f, m_pMesh->GetUpVector()), FColor::Purple);
+			DrawDebugLine(GetWorld(), Loc, Loc + XVec * 50.0f, FColor::Cyan);
+			DrawDebugLine(GetWorld(), Loc, Loc + YVec * 50.0f, FColor::Purple);
+			//確認
+			//UE_LOG(LogTemp, Warning, TEXT("%f,%f,%f"), PlanetDire.RightVector.X, PlanetDire.RightVector.Y, PlanetDire.RightVector.Z);
 		}
 
 		//移動方向に足す
-		MoveDire += GravityVec + CentrifugalVec;
+		AddMoveDire += GravityVec + CentrifugalVec;
 
 		//デバッグ
 		{
@@ -294,9 +305,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	}
 
 	//速度の変更
-	m_pMovement->Acceleration = MoveDire.Length();
+	m_pMovement->Acceleration = AddMoveDire.Length();
 	//移動の反映
-	AddMovementInput(MoveDire.GetSafeNormal());
+	AddMovementInput(AddMoveDire.GetSafeNormal());
 
 	//推進方向を表示
 	DrawDebugLine(GetWorld(), Loc, Loc + m_pMesh->GetForwardVector() * m_ForwardSpeed, FColor::Yellow);
