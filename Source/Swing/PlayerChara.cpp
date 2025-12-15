@@ -263,10 +263,13 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * m_pMovement->Velocity.Length() / Distance;
 			//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * (m_pMovement->Velocity.Length() / Distance);
 			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * m_pMovement->Velocity.Length() * (1.0f - Distance / m_pPlanets[i]->GetGradius() * 0.000001f);
-			CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius());
+			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius());
+			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * UKismetMathLibrary::Dot_VectorVector(m_pMovement->Velocity, PlanetDire.RotateAngleAxis(90.0f,m_pMesh->GetUpVector()));
 
 			//重力影響数確認
 			//UE_LOG(LogTemp, Warning, TEXT("%i"), m_pPlanets.Num());
+			//星平行方向
+			DrawDebugLine(GetWorld(), Loc, Loc + PlanetDire.RotateAngleAxis(90.0f, m_pMesh->GetUpVector()), FColor::Purple);
 		}
 
 		//移動方向に足す
