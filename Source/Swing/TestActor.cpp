@@ -10,5 +10,7 @@ ATestActor::ATestActor()
 
 void ATestActor::BeginPlay()
 {
+	Super::BeginPlay();
+
 	m_pMainCollision->SetSimulatePhysics(true);
 }
