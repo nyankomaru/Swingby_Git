@@ -32,7 +32,7 @@ void APlanet::BeginPlay()
 {
 	if (m_pGravitySphere)
 	{
-		m_pGravitySphere->SetWorldScale3D(FVector(m_Gravity * 8500.0f));
+		m_pGravitySphere->SetWorldScale3D(FVector(m_Gravity * 10.0f));
 	}
 }
 
@@ -46,6 +46,11 @@ float APlanet::GetGravity() const
 float APlanet::GetGradius() const
 {
 	return m_pGravitySphere->GetScaledSphereRadius();
+}
+//¯‚Ì”¼Œa‚ğæ“¾
+float APlanet::GetRadius() const
+{
+	return Cast<USphereComponent>(m_pMainCollision)->GetScaledSphereRadius();
 }
 
 //–¼‘O‚Ìæ“¾

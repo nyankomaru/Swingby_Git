@@ -28,6 +28,8 @@ public:
 	float GetGravity() const;
 	//d—Í”¼Œa‚Ìæ“¾
 	float GetGradius() const;
+	//¯‚Ì”¼Œa‚ğæ“¾
+	float GetRadius() const;
 	//–¼‘O‚Ìæ“¾
 	FName GetName() const;
 	
