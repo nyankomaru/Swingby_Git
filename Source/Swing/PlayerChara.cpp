@@ -476,7 +476,7 @@ void APlayerChara::ChangeCtrl(float _value)
 //コリジョンプリセット変更
 void APlayerChara::ChangeCollision()
 {
-	if (m_bCollisiON)
+	if (!m_bCollisiON)
 	{
 		m_pMesh->SetCollisionProfileName("MyBlockDynamic");
 	}
