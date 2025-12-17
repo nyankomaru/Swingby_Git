@@ -51,17 +51,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveSocket(AActor* _p);
 
-	//方向の取得
-	FRotator GetUpRotator();
-
 	//重力を受けている物の数の取得
 	UFUNCTION(BlueprintCallable)
 	int GetGraNum();
-
 	//速度の取得
 	UFUNCTION(BlueprintCallable)
 	float GetSpeed();
 
+	//方向の取得
+	FRotator GetUpRotator();
+
+	//減速
+	void SubSpeed(float _Rate);
 private:
 	//回転の更新
 	void UpdateRotation(float DeltaTime);
@@ -96,6 +97,8 @@ private:
 
 	//コリジョンプリセット変更
 	void ChangeCollision();
+	//カメラ操作変更
+	void ChangeCamCon();
 
 private:
 
@@ -153,4 +156,7 @@ private:
 	float m_Speed;		//移動速度
 
 	float m_ChangeCtrl;
+
+	bool m_bCollisiON;	//コリジョン有効の有無
+	bool m_bCamConChange;	//カメラ操作変更
 };

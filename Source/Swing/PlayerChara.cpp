@@ -21,6 +21,8 @@ APlayerChara::APlayerChara()
 	, m_ForwardInput(0.0f)
 	, m_ChangeCtrl(0.0f)
 	, m_Speed(0.0f)
+	, m_bCollisiON(false)
+	, m_bCamConChange(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -93,6 +95,8 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	InputComponent->BindAxis("Left_Ctrl", this, &APlayerChara::ChangeCtrl);
 	//コリジョン変更
 	InputComponent->BindAction("O_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCollision);
+	//カメラ操作変更
+	InputComponent->BindAction("V_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCamCon);
 }
 
 //ティック
@@ -180,6 +184,12 @@ float APlayerChara::GetSpeed()
 	return m_pMovement->Velocity.Length();
 }
 
+//減速
+void APlayerChara::SubSpeed(float _Rate)
+{
+	m_pMovement->Velocity *= _Rate;
+}
+
 //回転の更新
 void APlayerChara::UpdateRotation(float DeltaTime)
 {
@@ -211,8 +221,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//前進入力がない時は勝手に回転する
-	//else if(m_ForwardInput == 0.0f)
-	else{
+	else if(m_ForwardInput == 0.0f)
+	{
 		//進行方向に徐々に向かせる
 		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
 	}
@@ -232,8 +242,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//m_ForwardInputは前後を決める
 		AddMoveDire += m_pMesh->GetForwardVector() * m_ForwardInput * m_ForwardSpeed;
 
-		//次の入力の為にリセット
-		m_ForwardInput = 0.0f;
+		
 	}
 
 	//重力を受けている時の処理
@@ -251,13 +260,12 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			float Distance(PlanetDire.Length() - m_pPlanets[i]->GetRadius());	//星の表面との距離
 			//向かう強さ(近いほど設定した値に近くなる)
 			//float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())));
-			float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())));
-			//float Gravity(m_pPlanets[i]->GetGravity() * (Distance * Distance));
+			float Gravity(m_pPlanets[i]->GetGravity() * (4.0f - Distance / ((m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()) * 4.0f)) * 10.0f);
+			//float Gravity(m_pPlanets[i]->GetGravity() * (10.0f - (Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())) * 10.0f));
+			//float Gravity(m_pPlanets[i]->GetGravity() / (Distance * Distance));
 
 			//進行方向に引力を足す
 			GravityVec += PlanetDire.GetSafeNormal() * Gravity;
-
-
 			//一番近い惑星の判定
 			if ((m_pPlanets[NearID]->GetActorLocation() - Loc).Length() > Distance)
 			{
@@ -287,7 +295,11 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//星に平行な移動量
 		float ParallelMove(sqrtf(X * X + Y * Y));
 		//遠心力
-		FVector CentrifugalVec((NearPlanetDire.GetSafeNormal() * -1.0f) * ParallelMove / NearDistance);
+		//FVector CentrifugalVec((NearPlanetDire.GetSafeNormal() * -1.0f) * m_ForwardSpeed * (NearDistance / m_pPlanets[NearID]->GetGradius()));
+		FVector CentrifugalVec(0.0f);
+
+		//確認
+		UE_LOG(LogTemp, Warning, TEXT("%f"), CentrifugalVec.Length());
 		//移動方向に足す
 		AddMoveDire += GravityVec + CentrifugalVec;
 
@@ -370,11 +382,14 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		//次の入力に備えてリセット
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
-	else
+	else if(m_bCamConChange)
 	{
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
-		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
+		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
 	}
+
+	//次の入力の為にリセット
+	m_ForwardInput = 0.0f;
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
 }
@@ -461,5 +476,20 @@ void APlayerChara::ChangeCtrl(float _value)
 //コリジョンプリセット変更
 void APlayerChara::ChangeCollision()
 {
-	m_pMesh->SetCollisionProfileName("MyBlockDynamic");
+	if (m_bCollisiON)
+	{
+		m_pMesh->SetCollisionProfileName("MyBlockDynamic");
+	}
+	else
+	{
+		m_pMesh->SetCollisionProfileName("AllIgnore");
+	}
+
+	m_bCollisiON = !m_bCollisiON;
+}
+
+//カメラ操作変更
+void APlayerChara::ChangeCamCon()
+{
+	m_bCamConChange = !m_bCamConChange;
 }
