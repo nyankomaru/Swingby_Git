@@ -23,8 +23,6 @@ APlanet::APlanet()
 		m_pGravitySphere->SetCollisionProfileName("MyOverlapStatic");
 		//タグを持たせる
 		m_pGravitySphere->ComponentTags.Add("Gravity");
-		//エディタ上でのちらつきを抑える為に小さくする
-		m_pGravitySphere->SetWorldScale3D(FVector(0.2f));
 	}
 }
 
@@ -32,7 +30,7 @@ void APlanet::BeginPlay()
 {
 	if (m_pGravitySphere)
 	{
-		m_pGravitySphere->SetWorldScale3D(FVector(m_Gravity * 200.0f));
+		//m_pGravitySphere->SetWorldScale3D(FVector(m_Gravity * 200.0f));
 	}
 }
 

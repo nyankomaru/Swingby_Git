@@ -35,8 +35,8 @@ APlayerChara::APlayerChara()
 		m_pMesh->SetGenerateOverlapEvents(true);
 		m_pMesh->OnComponentBeginOverlap.AddDynamic(this, &APlayerChara::OnOverlapBegin);
 		m_pMesh->OnComponentEndOverlap.AddDynamic(this, &APlayerChara::OnOverlapEnd);
-		//当たり判定(ここでは全部無視)
-		m_pMesh->SetCollisionProfileName("AllIgnore");
+		//当たり判定
+		m_pMesh->SetCollisionProfileName("MyBlockDynamic");
 		//重力の影響は受けない
 		m_pMesh->SetEnableGravity(false);
 	}
@@ -141,6 +141,8 @@ void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 	//相手が重力の場合処理を行う
 	if (!OtherComp->ComponentHasTag("Gravity")) { return; }
 
+	//OtherComp->SetCollisionProfileName("AllIgnore");
+
 	//配列から削除
 	m_pPlanets.Remove(Cast<APlanet>(OtherActor));
 }
@@ -181,7 +183,7 @@ int APlayerChara::GetGraNum()
 float APlayerChara::GetSpeed()
 {
 	//return m_Speed;
-	return m_pMovement->Velocity.Length();
+	return m_pMovement->Velocity.Length() / 100.0f;
 }
 
 //減速
@@ -221,7 +223,7 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//前進入力がない時は勝手に回転する
-	else if(m_ForwardInput == 0.0f)
+	else// if(m_ForwardInput == 0.0f)
 	{
 		//進行方向に徐々に向かせる
 		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
@@ -260,7 +262,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			float Distance(PlanetDire.Length() - m_pPlanets[i]->GetRadius());	//星の表面との距離
 			//向かう強さ(近いほど設定した値に近くなる)
 			//float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())));
-			float Gravity(m_pPlanets[i]->GetGravity() * (4.0f - Distance / ((m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()) * 4.0f)) * 10.0f);
+			float Gravity(m_pPlanets[i]->GetGravity() * (1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())));
 			//float Gravity(m_pPlanets[i]->GetGravity() * (10.0f - (Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())) * 10.0f));
 			//float Gravity(m_pPlanets[i]->GetGravity() / (Distance * Distance));
 
@@ -274,7 +276,12 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 			//
 			//確認
-			UE_LOG(LogTemp, Warning, TEXT("%f"), Gravity);
+			UE_LOG(LogTemp, Warning, TEXT("%f * (1.0 - (%f / %f = %f) = %f) = %f"), 
+				m_pPlanets[i]->GetGravity(), 
+				Distance, m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius(), 
+				Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
+				1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
+				Gravity);
 		}
 			//遠心力を足す
 			//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * m_pMovement->Velocity.Length() / Distance;
@@ -299,7 +306,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		FVector CentrifugalVec(0.0f);
 
 		//確認
-		UE_LOG(LogTemp, Warning, TEXT("%f"), CentrifugalVec.Length());
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), CentrifugalVec.Length());
 		//移動方向に足す
 		AddMoveDire += GravityVec + CentrifugalVec;
 
@@ -385,7 +392,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	else if(m_bCamConChange)
 	{
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
-		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(0.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
+		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
 	}
 
 	//次の入力の為にリセット
@@ -397,7 +404,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	m_pCamera->FieldOfView = 75.0f + m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed * 0.75f) * 75.0f;
+	m_pCamera->FieldOfView = 75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed));
 }
 
 //ソケットの更新
