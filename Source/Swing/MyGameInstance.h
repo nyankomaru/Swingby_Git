@@ -8,6 +8,7 @@
 
 //前方宣言
 class APlayerChara;
+class USplineComponent;
 
 /**
  * 
@@ -22,7 +23,13 @@ public:
 	void SetPlayer(APlayerChara* _Player);
 	UFUNCTION(BlueprintCallable)
 	APlayerChara* GetPlayer() const;
+
+	//コーススプラインの設定・取得
+	UFUNCTION(BlueprintCallable)
+	void SetCourseSpline(USplineComponent* _Spline);
+	USplineComponent* GetCourseSpline() const;
 	
 public:
-	APlayerChara* m_pPlayer;
+	APlayerChara* m_pPlayer;	//プレイヤー
+	USplineComponent* m_pCourseSpline;	//コースのスプライン
 };

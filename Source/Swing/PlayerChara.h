@@ -14,6 +14,7 @@ class APlanet;
 class UFloatingPawnMovement;
 class USpringArmComponent;
 class UCameraComponent;
+class USplineComponent;
 
 /**
  * 
@@ -99,6 +100,9 @@ private:
 	void ChangeCollision();
 	//カメラ操作変更
 	void ChangeCamCon();
+	//機体の自動回転の変更
+	void ChangeAutoRot();
+
 
 private:
 
@@ -129,6 +133,9 @@ private:
 	//前進速度の倍率
 	UPROPERTY(EditAnywhere,Category = Speed,meta = (AllowPrivateAccess = "true"))
 	float m_ForwardSpeed;
+	//コースに戻る速度
+	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
+	float m_ReturnCourseSpeed;
 
 	//回転速度
 	UPROPERTY(EditAnywhere,Category = Rotation,meta = (AllowPrivateAccess = "true"))
@@ -147,6 +154,8 @@ private:
 	TArray<FVector> m_SocketPos;	//付属物の位置
 	TArray<bool> m_bSocketRot;	//付属物が追従回転するかどうかを示す
 
+	USplineComponent* m_pSpline;	//レベル上のコースのスプライン
+
 	FVector m_MoveDire;		//進行方向
 	FVector m_PreLoc;		//ひとつ前の位置
 	FRotator m_Rot;			//回転角度
@@ -159,4 +168,5 @@ private:
 
 	bool m_bCollisiON;	//コリジョン有効の有無
 	bool m_bCamConChange;	//カメラ操作変更
+	bool m_bAutoRot;	//機体の自動回転の有無
 };

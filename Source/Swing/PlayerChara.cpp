@@ -11,6 +11,7 @@
 #include "MyGameInstance.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SplineComponent.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -23,6 +24,7 @@ APlayerChara::APlayerChara()
 	, m_Speed(0.0f)
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
+	, m_bAutoRot(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -97,6 +99,8 @@ void APlayerChara::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	InputComponent->BindAction("O_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCollision);
 	//カメラ操作変更
 	InputComponent->BindAction("V_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeCamCon);
+	//機体の自動回転の変更
+	InputComponent->BindAction("R_Key", EInputEvent::IE_Pressed, this, &APlayerChara::ChangeAutoRot);
 }
 
 //ティック
@@ -122,6 +126,8 @@ void APlayerChara::BeginPlay()
 
 	//ゲームインスタンスに登録
 	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
+
+	m_pSpline = GetGameInstance<UMyGameInstance>()->GetCourseSpline();
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -222,8 +228,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		//次の回転の為にリセット
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
-	//前進入力がない時は勝手に回転する
-	else// if(m_ForwardInput == 0.0f)
+	//自動回転有効時は勝手に進行方向を向く
+	else if(m_bAutoRot)
 	{
 		//進行方向に徐々に向かせる
 		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
@@ -332,6 +338,15 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		}
 
 	}
+
+	//コースに戻る補正
+	FVector ReturnCourseVec(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
+	float ReCourseLen(ReturnCourseVec.Length());
+	DrawDebugLine(GetWorld(), Loc, ReturnCourseVec, FColor::Orange);
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), ReturnCourseVec.Length());
+
+	AddMoveDire += (ReturnCourseVec - Loc).GetSafeNormal() * m_ReturnCourseSpeed * ReCourseLen;
+	//RootComponent->AddWorldOffset((ReturnCourseVec - Loc) * DeltaTime);
 
 	//速度の変更
 	m_pMovement->Acceleration = AddMoveDire.Length();
@@ -479,7 +494,6 @@ void APlayerChara::ChangeCtrl(float _value)
 {
 	m_ChangeCtrl = _value;
 }
-
 //コリジョンプリセット変更
 void APlayerChara::ChangeCollision()
 {
@@ -494,9 +508,13 @@ void APlayerChara::ChangeCollision()
 
 	m_bCollisiON = !m_bCollisiON;
 }
-
 //カメラ操作変更
 void APlayerChara::ChangeCamCon()
 {
 	m_bCamConChange = !m_bCamConChange;
+}
+//機体の自動回転の変更
+void APlayerChara::ChangeAutoRot()
+{
+	m_bAutoRot = !m_bAutoRot;
 }

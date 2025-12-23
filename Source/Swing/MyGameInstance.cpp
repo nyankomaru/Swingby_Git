@@ -12,3 +12,12 @@ APlayerChara* UMyGameInstance::GetPlayer() const
 {
 	return m_pPlayer;
 }
+
+void UMyGameInstance::SetCourseSpline(USplineComponent* _Spline)
+{
+	m_pCourseSpline = _Spline;
+}
+USplineComponent* UMyGameInstance::GetCourseSpline() const
+{
+	return m_pCourseSpline;
+}
