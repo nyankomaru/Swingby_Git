@@ -60,7 +60,7 @@ APlayerChara::APlayerChara()
 	m_pMovement = CreateDefaultSubobject<UFloatingPawnMovement>("m_pMovement");
 	if (m_pMovement)
 	{
-
+		//初期設定部
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_Rot.Pitch);
@@ -121,36 +121,24 @@ void APlayerChara::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//当たり判定(ここで判定を入れるとすでに重なっているものもbeginが発生)
-	//m_pMainCollision->SetCollisionProfileName("MyBlockDynamic");
-
 	//ゲームインスタンスに登録
+	//他のオブジェクトがインスタンス経由でアドレスを取得できる
 	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
-
+	//常に引っ張られる対象のコーススプラインを取得
 	m_pSpline = GetGameInstance<UMyGameInstance>()->GetCourseSpline();
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
-	//相手が重力の場合処理を行う
-	if (!OtherComp->ComponentHasTag("Gravity")) { return; }
-
-	//配列に追加
-	m_pPlanets.Add(Cast<APlanet>(OtherActor));
-	
+	//相手が重力の場合配列に追加
+	if (!OtherComp->ComponentHasTag("Gravity")) { m_pPlanets.Add(Cast<APlanet>(OtherActor)); }
 	//UE_LOG(LogTemp, Warning, TEXT("%f , %f"), Cast<USphereComponent>(OtherComp)->GetScaledSphereRadius(), (OtherComp->GetComponentLocation() - GetActorLocation()).Length());
 }
 
 void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	//相手が重力の場合処理を行う
-	if (!OtherComp->ComponentHasTag("Gravity")) { return; }
-
-	//OtherComp->SetCollisionProfileName("AllIgnore");
-
-	//配列から削除
-	m_pPlanets.Remove(Cast<APlanet>(OtherActor));
+	//相手が重力の場合配列から削除
+	if (!OtherComp->ComponentHasTag("Gravity")) { m_pPlanets.Remove(Cast<APlanet>(OtherActor)); }
 }
 
 //ソケットへの追加
@@ -203,7 +191,7 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 {
 	//回転入力がある時には動かせる
 	if(!m_Rot.IsZero())
-	{
+{
 		//重心に中心を合わせる
 		AddActorLocalOffset(m_RotPivot);
 
@@ -229,10 +217,11 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//自動回転有効時は勝手に進行方向を向く
-	else if(m_bAutoRot)
+	else if(m_ForwardInput != 0.0f)
 	{
 		//進行方向に徐々に向かせる
-		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
+		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
+		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
 	}
 }
 
