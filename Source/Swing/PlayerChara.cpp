@@ -329,13 +329,16 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	}
 
 	//コースに戻る補正
-	FVector ReturnCourseVec(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
-	float ReCourseLen(ReturnCourseVec.Length());
-	DrawDebugLine(GetWorld(), Loc, ReturnCourseVec, FColor::Orange);
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), ReturnCourseVec.Length());
+	if (m_pSpline)
+	{
+		FVector ReturnCourseVec(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
+		float ReCourseLen(ReturnCourseVec.Length());
+		DrawDebugLine(GetWorld(), Loc, ReturnCourseVec, FColor::Orange);
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), ReturnCourseVec.Length());
 
-	AddMoveDire += (ReturnCourseVec - Loc).GetSafeNormal() * m_ReturnCourseSpeed * ReCourseLen;
-	//RootComponent->AddWorldOffset((ReturnCourseVec - Loc) * DeltaTime);
+		AddMoveDire += (ReturnCourseVec - Loc).GetSafeNormal() * m_ReturnCourseSpeed * ReCourseLen;
+		//RootComponent->AddWorldOffset((ReturnCourseVec - Loc) * DeltaTime);
+	}
 
 	//速度の変更
 	m_pMovement->Acceleration = AddMoveDire.Length();
