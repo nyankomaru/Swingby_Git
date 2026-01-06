@@ -156,6 +156,9 @@ private:
 	//レベル上のコースのスプライン
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
 	USplineComponent* m_pSpline;
+	//強い補正を発生させる距離
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
+	float m_ReturnCourseLen;
 
 private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
@@ -164,13 +167,8 @@ private:
 	TArray<FVector> m_SocketPos;	//付属物の位置
 	TArray<bool> m_bSocketRot;	//付属物が追従回転するかどうかを示す	
 
-	FVector m_MoveDire;		//進行方向
 	FVector m_PreLoc;		//ひとつ前の位置
-
-	FVector m_PreReturnVec;
-	FVector m_PreVelo;
-	FVector m_Velocity;
-	bool m_bReturn;
+	FVector m_Velocity;		//補正を除いた移動量
 
 	FRotator m_Rot;			//回転角度
 	FRotator m_CameraRot;	//カメラの向いている方向
