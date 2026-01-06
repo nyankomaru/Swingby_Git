@@ -16,6 +16,9 @@
 //コンストラクタ
 APlayerChara::APlayerChara()
 	: m_MoveDire(0.0f)
+	, m_PreReturnVec(0.0f)
+	, m_PreVelo(0.0f)
+	, m_Velocity(0.0f)
 	, m_Rot(0.0f)
 	, m_CameraRot(0.0f)
 	, m_CameraRotInput(0.0f)
@@ -25,6 +28,7 @@ APlayerChara::APlayerChara()
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
+	, m_bReturn(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -221,7 +225,7 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	{
 		//進行方向に徐々に向かせる
 		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
-		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
+		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
 	}
 }
 
@@ -230,15 +234,23 @@ void APlayerChara::UpdateMove(float DeltaTime)
 {
 	FVector Loc(GetActorLocation());		//プレイヤーの位置
 	FVector NowModeDire(m_pMovement->Velocity);	//現在の進行方向
-	FVector AddMoveDire(0.0f, 0.0f, 0.0f);		//足す進行方向
+	FVector AddMoveDire(0.0f);		//足す進行方向
+	FVector AddReturn(0.0f);	
 
-	//前進入力のある時
+	//移動入力がある時の処理
 	if (m_ForwardInput != 0.0f)
 	{
-		//移動方向に前進を加算
-		//m_ForwardInputは前後を決める
-		AddMoveDire += m_pMesh->GetForwardVector() * m_ForwardInput * m_ForwardSpeed;
-
+		//前進と減速の分岐
+		if (m_ForwardInput >= 0.0f)
+		{
+			//移動方向に前進を加算
+			//m_ForwardInputは前後を決める
+			AddMoveDire += m_pMesh->GetForwardVector() * m_ForwardInput * m_ForwardSpeed;
+		}
+		else
+		{
+			AddMoveDire += m_pMovement->Velocity * -1.0f * 0.8f;
+		}
 		
 	}
 
@@ -264,6 +276,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//進行方向に引力を足す
 			GravityVec += PlanetDire.GetSafeNormal() * Gravity;
 			//一番近い惑星の判定
+			//一つ前の星との距離と比較
 			if ((m_pPlanets[NearID]->GetActorLocation() - Loc).Length() > Distance)
 			{
 				NearID = i;
@@ -271,12 +284,12 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 			//
 			//確認
-			UE_LOG(LogTemp, Warning, TEXT("%f * (1.0 - (%f / %f = %f) = %f) = %f"), 
+			/*UE_LOG(LogTemp, Warning, TEXT("%f * (1.0 - (%f / %f = %f) = %f) = %f"), 
 				m_pPlanets[i]->GetGravity(), 
 				Distance, m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius(), 
 				Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
 				1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
-				Gravity);
+				Gravity);*/
 		}
 			//遠心力を足す
 			//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * m_pMovement->Velocity.Length() / Distance;
@@ -285,72 +298,92 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * m_pPlanets[i]->GetGravity() * (1.0f - Distance / m_pPlanets[i]->GetGradius());
 			//CentrifugalVec += (PlanetDire.GetSafeNormal() * -1.0f) * UKismetMathLibrary::Dot_VectorVector(m_pMovement->Velocity, PlanetDire.RotateAngleAxis(90.0f,m_pMesh->GetUpVector()));
 
-		//一番近い星の方向
-		FVector NearPlanetDire(m_pPlanets[NearID]->GetActorLocation() - Loc);
-		//距離
-		float NearDistance(NearPlanetDire.Length() - m_pPlanets[NearID]->GetRadius());
-		FVector XVec(UKismetMathLibrary::Cross_VectorVector(NearPlanetDire, NowModeDire).GetSafeNormal());
-		FVector YVec(UKismetMathLibrary::Cross_VectorVector(NearPlanetDire, XVec).GetSafeNormal());
-		//星との平行な移動量（縦横）
-		float X(UKismetMathLibrary::Dot_VectorVector(XVec, NowModeDire));
-		float Y(UKismetMathLibrary::Dot_VectorVector(YVec, NowModeDire));
-		//星に平行な移動量
-		float ParallelMove(sqrtf(X * X + Y * Y));
-		//遠心力
-		//FVector CentrifugalVec((NearPlanetDire.GetSafeNormal() * -1.0f) * m_ForwardSpeed * (NearDistance / m_pPlanets[NearID]->GetGradius()));
-		FVector CentrifugalVec(0.0f);
+		////一番近い星の方向
+		//FVector NearPlanetDire(m_pPlanets[NearID]->GetActorLocation() - Loc);
+		////距離
+		//float NearDistance(NearPlanetDire.Length() - m_pPlanets[NearID]->GetRadius());
+		//FVector XVec(UKismetMathLibrary::Cross_VectorVector(NearPlanetDire, NowModeDire).GetSafeNormal());
+		//FVector YVec(UKismetMathLibrary::Cross_VectorVector(NearPlanetDire, XVec).GetSafeNormal());
+		////星との平行な移動量（縦横）
+		//float X(UKismetMathLibrary::Dot_VectorVector(XVec, NowModeDire));
+		//float Y(UKismetMathLibrary::Dot_VectorVector(YVec, NowModeDire));
+		////星に平行な移動量
+		//float ParallelMove(sqrtf(X * X + Y * Y));
+		////遠心力
+		////FVector CentrifugalVec((NearPlanetDire.GetSafeNormal() * -1.0f) * m_ForwardSpeed * (NearDistance / m_pPlanets[NearID]->GetGradius()));
+		//FVector CentrifugalVec(0.0f);
 
-		//確認
-		//UE_LOG(LogTemp, Warning, TEXT("%f"), CentrifugalVec.Length());
-		//移動方向に足す
-		AddMoveDire += GravityVec + CentrifugalVec;
+		////確認
+		////UE_LOG(LogTemp, Warning, TEXT("%f"), CentrifugalVec.Length());
+		////移動方向に足す
+		//AddMoveDire += GravityVec + CentrifugalVec;
 
-		//デバッグ
-		{
-			//星に向かう方向
-			FVector PlanetDire(m_pPlanets[0]->GetActorLocation() - Loc);
-			//星との距離
-			float Distance(PlanetDire.Length());
-			//向かう強さ(近いほど設定した値に近くなる)
-			float Gravity(m_pPlanets[0]->GetGravity() * (1.0f - Distance / m_pPlanets[0]->GetGradius()));
+		////デバッグ
+		//{
+		//	//星に向かう方向
+		//	FVector PlanetDire(m_pPlanets[0]->GetActorLocation() - Loc);
+		//	//星との距離
+		//	float Distance(PlanetDire.Length());
+		//	//向かう強さ(近いほど設定した値に近くなる)
+		//	float Gravity(m_pPlanets[0]->GetGravity() * (1.0f - Distance / m_pPlanets[0]->GetGradius()));
 
-			//UE_LOG(LogTemp, Warning, TEXT("%f"), (m_pPlanets[0]->GetGravity() * (1.0f - (m_pPlanets[0]->GetActorLocation() - Loc).Length() / m_pPlanets[0]->GetGradius())));
-			//UE_LOG(LogTemp, Warning, TEXT("%f , %f , %f , %f"), Distance,m_pPlanets[0]->GetGradius(), m_pPlanets[0]->GetGravity(), Gravity);
-		
-			//星平行方向
-			DrawDebugLine(GetWorld(), Loc, Loc + NearPlanetDire * 50.0f, FColor::White);
-			DrawDebugLine(GetWorld(), Loc, Loc + XVec * 50.0f, FColor::Cyan);
-			DrawDebugLine(GetWorld(), Loc, Loc + YVec * 50.0f, FColor::Purple);
-			//重力と遠心力方向に線を表示
-			DrawDebugLine(GetWorld(), Loc, Loc + GravityVec, FColor::Red);
-			//DrawDebugLine(GetWorld(), Loc, Loc + CentrifugalVec, FColor::Blue);
-		}
-
+		//	//UE_LOG(LogTemp, Warning, TEXT("%f"), (m_pPlanets[0]->GetGravity() * (1.0f - (m_pPlanets[0]->GetActorLocation() - Loc).Length() / m_pPlanets[0]->GetGradius())));
+		//	//UE_LOG(LogTemp, Warning, TEXT("%f , %f , %f , %f"), Distance,m_pPlanets[0]->GetGradius(), m_pPlanets[0]->GetGravity(), Gravity);
+		//
+		//	//星平行方向
+		//	DrawDebugLine(GetWorld(), Loc, Loc + NearPlanetDire * 50.0f, FColor::White);
+		//	DrawDebugLine(GetWorld(), Loc, Loc + XVec * 50.0f, FColor::Cyan);
+		//	DrawDebugLine(GetWorld(), Loc, Loc + YVec * 50.0f, FColor::Purple);
+		//	//重力と遠心力方向に線を表示
+		//	DrawDebugLine(GetWorld(), Loc, Loc + GravityVec, FColor::Red);
+		//	//DrawDebugLine(GetWorld(), Loc, Loc + CentrifugalVec, FColor::Blue);
+		//}
 	}
 
-	//コースに戻る補正
-	if (m_pSpline)
-	{
-		FVector ReturnCourseVec(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
-		float ReCourseLen(ReturnCourseVec.Length());
-		DrawDebugLine(GetWorld(), Loc, ReturnCourseVec, FColor::Orange);
-		//UE_LOG(LogTemp, Warning, TEXT("%f"), ReturnCourseVec.Length());
+	m_Velocity += AddMoveDire * DeltaTime;
 
-		AddMoveDire += (ReturnCourseVec - Loc).GetSafeNormal() * m_ReturnCourseSpeed * ReCourseLen;
-		//RootComponent->AddWorldOffset((ReturnCourseVec - Loc) * DeltaTime);
-	}
-
-	//速度の変更
-	m_pMovement->Acceleration = AddMoveDire.Length();
 	//移動の反映
 	//AddMovementInput(AddMoveDire.GetSafeNormal());
-	m_pMovement->Velocity += AddMoveDire * DeltaTime;
-	//ControlInputVector += AddMoveDire;
+	m_PreVelo = m_pMovement->Velocity;
+
+	//m_pMovement->Velocity += AddMoveDire;
+	//m_pMovement->Velocity = (m_Velocity + AddReturn);
+	//m_pMovement->Velocity = m_Velocity;
+	//m_pMovement->Velocity = FVector(1000.0f, 0.0f, 0.0f);
+
+	//コースに戻る補正
+	//常時コースの中心に戻ろうとする
+	if (m_pSpline)
+	{
+		FVector NearCourseLoc(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));	//スプライン上の最近点
+		FVector NearCourseVec(NearCourseLoc - Loc);		//最近点に向かうベクトル
+		float NearCourseLen(NearCourseVec.Length());	//最近点との距離
+
+		//コースの中心に向かうベクトル
+		//離れているほどに長くなる
+		AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
+
+		//距離が離れすぎた時は強めに戻す
+		if (NearCourseLen >= 5000.0f)
+		{
+			m_Velocity -= m_Velocity * DeltaTime;
+			AddReturn += NearCourseVec.GetSafeNormal() * m_MinReturnCourseSpeed * DeltaTime;
+		}
+
+		//スプラインの位置の確認用
+		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
+	}
+
+	//FVector NowVelo(m_pMovement->Velocity);
+	//UE_LOG(LogTemp, Warning, TEXT("MoveVelo(%f,%f,%f) , AddVelo(%f,%f,%f) , Return(%f,%f,%f)"), NowVelo.X, NowVelo.Y, NowVelo.Z, m_Velocity.X, m_Velocity.Y, m_Velocity.Z,AddReturn.X, AddReturn.Y, AddReturn.Z);
 
 	//推進方向を表示
 	DrawDebugLine(GetWorld(), Loc, Loc + m_pMesh->GetForwardVector() * m_ForwardSpeed, FColor::Yellow);
 	//移動方向を線として表示
 	DrawDebugLine(GetWorld(), Loc, Loc + m_pMovement->Velocity, FColor::Green);
+
+	//最終的移動変更
+	m_pMovement->Velocity = m_Velocity + AddReturn;
 	
 	//移動後の位置
 	Loc = GetActorLocation();
@@ -358,7 +391,6 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	m_Speed = (Loc - m_PreLoc).Length() / DeltaTime;
 	//前回位置の保存
 	m_PreLoc = Loc;
-
 }
 
 //カメラの更新
@@ -439,6 +471,14 @@ void APlayerChara::MoveForward(float _value)
 	if (_value != 0.0f)
 	{
 		m_ForwardInput = _value;
+	}
+}
+//減速
+void APlayerChara::Deceleration(float _value)
+{
+	if (_value != 0.0f)
+	{
+		
 	}
 }
 

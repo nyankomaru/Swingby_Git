@@ -84,6 +84,8 @@ private:
 //入力
 	//移動
 	void MoveForward(float _value);
+	//減速
+	void Deceleration(float _value);
 	//回転
 	void RotPitch(float _value);
 	void RotYaw(float _value);
@@ -136,6 +138,10 @@ private:
 	//コースに戻る速度
 	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
 	float m_ReturnCourseSpeed;
+	//コースに戻る速度の最低値
+	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
+	float m_MinReturnCourseSpeed;
+
 
 	//回転速度
 	UPROPERTY(EditAnywhere,Category = Rotation,meta = (AllowPrivateAccess = "true"))
@@ -147,17 +153,25 @@ private:
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
 	FVector m_RotPivot;
 
+	//レベル上のコースのスプライン
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
+	USplineComponent* m_pSpline;
+
 private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
 
 	TArray<AActor*> m_pSocket;	//付属物の入れ物
 	TArray<FVector> m_SocketPos;	//付属物の位置
-	TArray<bool> m_bSocketRot;	//付属物が追従回転するかどうかを示す
-
-	USplineComponent* m_pSpline;	//レベル上のコースのスプライン
+	TArray<bool> m_bSocketRot;	//付属物が追従回転するかどうかを示す	
 
 	FVector m_MoveDire;		//進行方向
 	FVector m_PreLoc;		//ひとつ前の位置
+
+	FVector m_PreReturnVec;
+	FVector m_PreVelo;
+	FVector m_Velocity;
+	bool m_bReturn;
+
 	FRotator m_Rot;			//回転角度
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
