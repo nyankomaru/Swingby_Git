@@ -16,6 +16,7 @@
 //コンストラクタ
 APlayerChara::APlayerChara()
 	: m_Velocity(0.0f)
+	, m_ReturnCourseVelo(0.0f)
 	, m_Rot(0.0f)
 	, m_CameraRot(0.0f)
 	, m_CameraRotInput(0.0f)
@@ -356,21 +357,37 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 		//コースの中心に向かうベクトル
 		//離れているほどに長くなる
-		AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
+		//AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
 
 		//距離が離れすぎた時は強めに戻す
 		if (NearCourseLen >= m_ReturnCourseLen)
 		{
-			m_Velocity -= m_Velocity * DeltaTime;
-			AddReturn += NearCourseVec.GetSafeNormal() * m_MinReturnCourseSpeed * DeltaTime;
+			//m_Velocity -= m_Velocity * DeltaTime;
+			AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
+
+			//if (m_ReturnCourseVelo.IsZero())
+			{
+				m_ReturnCourseVelo = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
+			}
+			//else
+			{
+				m_Velocity -= m_Velocity * DeltaTime;
+			}
 		}
+		else if(!m_ReturnCourseVelo.IsZero())
+		{
+			//m_ReturnCourseVelo = FVector::Zero();
+			m_pMovement->Velocity -= m_ReturnCourseVelo;
+		}
+
 		//スプラインの位置の確認用
 		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
 		//UE_LOG(LogTemp, Warning, TEXT("%f"), NearCourseLen);
 	}
 
 	//最終的移動変更
-	m_pMovement->Velocity = m_Velocity + AddReturn;
+	//m_pMovement->Velocity = m_Velocity + AddReturn;
+	m_pMovement->Velocity += AddMoveDire * DeltaTime + m_ReturnCourseVelo;
 	
 	//移動後の位置
 	Loc = GetActorLocation();

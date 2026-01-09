@@ -62,6 +62,10 @@ public:
 	//方向の取得
 	FRotator GetUpRotator();
 
+	//スプラインの取得・設定
+	UPrimitiveComponent* GetSpline() const;
+	void SetSpline(UPrimitiveComponent* _Spline);
+
 	//減速
 	void SubSpeed(float _Rate);
 private:
@@ -169,6 +173,7 @@ private:
 
 	FVector m_PreLoc;		//ひとつ前の位置
 	FVector m_Velocity;		//補正を除いた移動量
+	FVector m_ReturnCourseVelo;	//ステージに戻るベクトル
 
 	FRotator m_Rot;			//回転角度
 	FRotator m_CameraRot;	//カメラの向いている方向
