@@ -114,6 +114,8 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateCamera(DeltaTime);
 	UpdateSocket();
 
+	m_ForwardInput = 0.0f;		//入力準備
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
 }
 
@@ -181,6 +183,12 @@ float APlayerChara::GetSpeed()
 	return m_pMovement->Velocity.Length() / 100.0f;
 }
 
+//入力の取得
+float APlayerChara::GetForwardInput() const
+{
+	return m_ForwardInput;
+}
+
 //減速
 void APlayerChara::SubSpeed(float _Rate)
 {
@@ -236,7 +244,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//ーーーーーーーーーーーーーーーー
 	//移動入力がある時の処理
 	//ーーーーーーーーーーーーーーーー
-	if (m_ForwardInput != 0.0f)
+	if (FMath::Abs(m_ForwardInput) > 0.01f)
 	{
 		//前進と減速の分岐
 		if (m_ForwardInput >= 0.0f)
@@ -450,7 +458,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	}
 
 	//次の入力の為にリセット
-	m_ForwardInput = 0.0f;
+	/*m_ForwardInput = 0.0f;*/
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
 }
@@ -483,10 +491,15 @@ void APlayerChara::UpdateSocket()
 //移動
 void APlayerChara::MoveForward(float _value)
 {
-	if (_value != 0.0f)
-	{
-		m_ForwardInput = _value;
-	}
+	//if (_value != 0.0f)
+
+	UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), _value);
+	//上書きではなく加算
+	m_ForwardInput += _value;  
+	//念のため
+	m_ForwardInput = FMath::Clamp(m_ForwardInput, -1.0f, 1.0f); 
+
+	//}
 }
 //減速
 void APlayerChara::Deceleration(float _value)

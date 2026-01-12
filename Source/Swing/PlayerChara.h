@@ -59,6 +59,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetSpeed();
 
+	//ƒvƒŒƒCƒ„[‚Ì“ü—Í‚ğæ“¾
+	UFUNCTION(BlueprintPure, Category = "Input")
+	float GetForwardInput() const;
+
+
 	//•ûŒü‚Ìæ“¾
 	FRotator GetUpRotator();
 
