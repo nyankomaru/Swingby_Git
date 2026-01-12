@@ -371,14 +371,18 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		if (NearCourseLen >= m_ReturnCourseLen)
 		{
 			AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
-			m_ReturnCourseVelo = AddReturn;
-			m_Velocity -= m_Velocity * DeltaTime;
+			m_ReturnCourseVelo += AddReturn;
+			AddReturn -= m_pMovement->Velocity * DeltaTime;
 		}
 		//補正が必要なくなったら打ち消したい
 		else if(!m_ReturnCourseVelo.IsZero())
 		{
-			AddReturn -= m_ReturnCourseVelo;
-			m_ReturnCourseVelo = FVector(0.0f);
+			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
+			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
+			if (m_ReturnCourseVelo.Length() <= 100000.0f)
+			{
+				m_ReturnCourseVelo = FVector(0.0f);
+			}
 		}
 
 		//スプラインの位置の確認用
@@ -459,7 +463,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	m_pCamera->FieldOfView = 75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed));
+	m_pCamera->FieldOfView = FMath::Clamp(75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)),75.0f,140.0f);
 }
 
 //ソケットの更新
