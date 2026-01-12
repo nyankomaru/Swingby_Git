@@ -370,22 +370,15 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//距離が離れすぎた時は強めに戻す
 		if (NearCourseLen >= m_ReturnCourseLen)
 		{
-			//m_Velocity -= m_Velocity * DeltaTime;
 			AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
-
-			//if (m_ReturnCourseVelo.IsZero())
-			{
-				m_ReturnCourseVelo = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
-			}
-			//else
-			{
-				m_Velocity -= m_Velocity * DeltaTime;
-			}
+			m_ReturnCourseVelo = AddReturn;
+			m_Velocity -= m_Velocity * DeltaTime;
 		}
+		//補正が必要なくなったら打ち消したい
 		else if(!m_ReturnCourseVelo.IsZero())
 		{
-			//m_ReturnCourseVelo = FVector::Zero();
-			m_pMovement->Velocity -= m_ReturnCourseVelo;
+			AddReturn -= m_ReturnCourseVelo;
+			m_ReturnCourseVelo = FVector(0.0f);
 		}
 
 		//スプラインの位置の確認用
@@ -395,7 +388,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 	//最終的移動変更
 	//m_pMovement->Velocity = m_Velocity + AddReturn;
-	m_pMovement->Velocity += AddMoveDire * DeltaTime + m_ReturnCourseVelo;
+	m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
 	
 	//移動後の位置
 	Loc = GetActorLocation();
