@@ -233,10 +233,10 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//自動回転有効時は勝手に進行方向を向く
-	else if(m_ForwardInput != 0.0f)
+	else if(m_ForwardInput == 0.0f)
 	{
 		//進行方向に徐々に向かせる
-		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
+		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
 		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
 	}
 }
@@ -395,6 +395,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
 			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
 			if (m_ReturnCourseVelo.Length() <= 100000.0f)
+			//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
 			{
 				m_ReturnCourseVelo = FVector(0.0f);
 			}
@@ -463,10 +464,10 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		//次の入力に備えてリセット
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
-	else if(m_bCamConChange)
+	else
 	{
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
-		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
+		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
 	}
 
 	//次の入力の為にリセット
