@@ -63,6 +63,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Input")
 	float GetForwardInput() const;
 
+	//前進入力の継続時間を取得
+	UFUNCTION(BlueprintCallable)
+	float GetForwardInputTime() const;
 
 	//方向の取得
 	FRotator GetUpRotator();
@@ -185,6 +188,7 @@ private:
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度
 	float m_Speed;		//移動速度
+	float m_ForwardInputTime;	//前進入力継続時間
 
 	float m_ChangeCtrl;
 

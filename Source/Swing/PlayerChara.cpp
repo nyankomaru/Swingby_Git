@@ -23,6 +23,7 @@ APlayerChara::APlayerChara()
 	, m_ForwardInput(0.0f)
 	, m_ChangeCtrl(0.0f)
 	, m_Speed(0.0f)
+	, m_ForwardInputTime(0.0f)
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
@@ -189,6 +190,12 @@ float APlayerChara::GetForwardInput() const
 	return m_ForwardInput;
 }
 
+//前進入力の継続時間を取得
+float APlayerChara::GetForwardInputTime() const
+{
+	return m_ForwardInputTime;
+}
+
 //減速
 void APlayerChara::SubSpeed(float _Rate)
 {
@@ -244,7 +251,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//ーーーーーーーーーーーーーーーー
 	//移動入力がある時の処理
 	//ーーーーーーーーーーーーーーーー
-	if (FMath::Abs(m_ForwardInput) > 0.01f)
+	if (FMath::Abs(m_ForwardInput) != 0.0f)
 	{
 		//前進と減速の分岐
 		if (m_ForwardInput >= 0.0f)
@@ -258,7 +265,15 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			AddMoveDire += m_pMovement->Velocity * -1.0f * 0.8f;
 		}
 		
+		//入力時間の変化
+		m_ForwardInputTime += DeltaTime;
 	}
+	else
+	{
+		m_ForwardInputTime -= DeltaTime;
+	}
+
+	m_ForwardInputTime = FMath::Clamp(m_ForwardInputTime, 0.0f, 1.0f);
 
 	//ーーーーーーーーーーーーーーーー
 	//重力を受けている時の処理
@@ -488,15 +503,15 @@ void APlayerChara::UpdateSocket()
 //移動
 void APlayerChara::MoveForward(float _value)
 {
-	//if (_value != 0.0f)
-
-	UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), _value);
-	//上書きではなく加算
-	m_ForwardInput += _value;  
-	//念のため
-	m_ForwardInput = FMath::Clamp(m_ForwardInput, -1.0f, 1.0f); 
-
-	//}
+	if (_value != 0.0f)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), _value);
+		////上書きではなく加算
+		//m_ForwardInput += _value;
+		////念のため
+		//m_ForwardInput = FMath::Clamp(m_ForwardInput, -1.0f, 1.0f);
+		m_ForwardInput = _value;
+	}
 }
 //減速
 void APlayerChara::Deceleration(float _value)
