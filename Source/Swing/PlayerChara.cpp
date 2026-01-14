@@ -27,6 +27,7 @@ APlayerChara::APlayerChara()
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
+	, m_bReturnCource(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -385,6 +386,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//‹——£‚ª—£‚ê‚·‚¬‚½Žž‚Í‹­‚ß‚É–ß‚·
 		if (NearCourseLen >= m_ReturnCourseLen)
 		{
+			m_bReturnCource = true;
 			AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
 			m_ReturnCourseVelo += AddReturn;
 			AddReturn -= m_pMovement->Velocity * DeltaTime;
@@ -394,10 +396,13 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		{
 			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
 			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
+			//if(NearCourseLen <= 200000.0f)
 			if (m_ReturnCourseVelo.Length() <= 100000.0f)
 			//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
 			{
 				m_ReturnCourseVelo = FVector(0.0f);
+				m_bReturnCource = false;
+				//m_pMovement->Velocity = m_Velocity.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
 			}
 		}
 
@@ -464,7 +469,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		//ŽŸ‚Ì“ü—Í‚É”õ‚¦‚ÄƒŠƒZƒbƒg
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
-	else
+	else if(!m_bReturnCource)
 	{
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
 		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));

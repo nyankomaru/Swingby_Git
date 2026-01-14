@@ -195,4 +195,5 @@ private:
 	bool m_bCollisiON;	//コリジョン有効の有無
 	bool m_bCamConChange;	//カメラ操作変更
 	bool m_bAutoRot;	//機体の自動回転の有無
+	bool m_bReturnCource;	//コースに
 };
