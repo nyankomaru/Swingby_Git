@@ -412,7 +412,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 		//スプラインの位置の確認用
 		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
-		UE_LOG(LogTemp, Warning, TEXT("%f"), NearCourseLen);
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), NearCourseLen);
 	}
 
 	//最終的移動変更
