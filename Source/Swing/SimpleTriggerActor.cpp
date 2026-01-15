@@ -14,6 +14,8 @@ ASimpleTriggerActor::ASimpleTriggerActor()
     TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     TriggerBox->SetCollisionResponseToAllChannels(ECR_Overlap);
     TriggerBox->SetGenerateOverlapEvents(true);
+    TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
+    TriggerBox->SetGenerateOverlapEvents(true);
 
     // 非表示（必要ならBPで変更）
     TriggerBox->SetHiddenInGame(true);
