@@ -397,18 +397,22 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
 			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
 			//if(NearCourseLen <= 200000.0f)
-			if (m_ReturnCourseVelo.Length() <= 100000.0f)
+			//if (m_ReturnCourseVelo.Length() <= 100000.0f)
 			//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
 			{
 				m_ReturnCourseVelo = FVector(0.0f);
 				m_bReturnCource = false;
 				//m_pMovement->Velocity = m_Velocity.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
+				//現在の移動を大きさを保ったままスプライン方向に変更
+				FVector NowVelo(m_pMovement->Velocity);
+				AddReturn -= NowVelo;
+				AddReturn += NowVelo.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
 			}
 		}
 
 		//スプラインの位置の確認用
 		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
-		//UE_LOG(LogTemp, Warning, TEXT("%f"), NearCourseLen);
+		UE_LOG(LogTemp, Warning, TEXT("%f"), NearCourseLen);
 	}
 
 	//最終的移動変更
