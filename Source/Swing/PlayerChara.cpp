@@ -182,7 +182,7 @@ int APlayerChara::GetGraNum()
 float APlayerChara::GetSpeed()
 {
 	//return m_Speed;
-	return m_pMovement->Velocity.Length() / 100.0f;
+	return m_pMovement->Velocity.Length() / 10.0f;
 }
 
 //入力の取得
@@ -482,9 +482,11 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		//次の入力に備えてリセット
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
+	//コースに戻る時は変化しない
 	else if(!m_bReturnCource)
 	{
-		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
+		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
+		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), (m_pMovement->Velocity.GetSafeNormal() + m_pMesh->GetForwardVector()).Rotation(), DeltaTime, m_CameraReturnRotSpeed));
 		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
 	}
 
