@@ -140,6 +140,12 @@ private:
 	//カメラが元の向きに戻る速度
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float m_CameraReturnRotSpeed;
+	//カメラのラグの距離の変化速度
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_CameraLagDistanceSpeed;
+	//カメラのラグの最大距離
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_CameraLagMaxDistance;
 
 	//移動コンポーネント
 	UPROPERTY(EditAnywhere,Category = Move,meta = (AllowPrivateAccess = "true"))

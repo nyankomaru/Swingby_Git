@@ -248,6 +248,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	FVector Loc(GetActorLocation());		//プレイヤーの位置
 	FVector AddMoveDire(0.0f);		//足す進行方向
 	FVector AddReturn(0.0f);	
+	float CameraLagDistance(m_pSpring->CameraLagMaxDistance);	//現在のカメラのラグの最大距離
 
 	//ーーーーーーーーーーーーーーーー
 	//移動入力がある時の処理
@@ -268,13 +269,21 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		
 		//入力時間の変化
 		m_ForwardInputTime += DeltaTime;
+		//カメラのラグの距離を離す
+		CameraLagDistance += m_CameraLagDistanceSpeed * DeltaTime;
 	}
 	else
 	{
 		m_ForwardInputTime -= DeltaTime;
+		//カメラのラグの距離を近づける
+		CameraLagDistance -= m_CameraLagDistanceSpeed * DeltaTime;
 	}
 
+	//カメラのラグの距離を変化
+	m_pSpring->CameraLagMaxDistance = FMath::Clamp(CameraLagDistance, 0.1f, m_CameraLagMaxDistance);
+
 	m_ForwardInputTime = FMath::Clamp(m_ForwardInputTime, 0.0f, 1.0f);
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
 
 	//ーーーーーーーーーーーーーーーー
 	//重力を受けている時の処理
@@ -297,7 +306,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//float Gravity(m_pPlanets[i]->GetGravity() * (10.0f - (Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius())) * 10.0f));
 			//float Gravity(m_pPlanets[i]->GetGravity() / (Distance * Distance));
 
-			UE_LOG(LogTemp, Warning, TEXT("%f"), Gravity);
+			//UE_LOG(LogTemp, Warning, TEXT("%f"), Gravity);
 			DrawDebugLine(GetWorld(), Loc, Loc + PlanetDire, FColor::Red);
 
 			//進行方向に引力を足す
