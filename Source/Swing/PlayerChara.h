@@ -4,6 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "MyPawn.h"
+
+//変更箇所
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
+
 #include "PlayerChara.generated.h"
 
 //前方宣言
@@ -17,7 +22,7 @@ class UCameraComponent;
 class USplineComponent;
 
 /**
- * 
+ *
  */
 UCLASS()
 class SWING_API APlayerChara : public AMyPawn
@@ -47,7 +52,7 @@ public:
 	//ソケットへの追加
 	//設定しない限り回転はしない
 	UFUNCTION(BlueprintCallable)
-	void AddSocket(AActor* _p, FVector _Pos,bool _bRot = false);
+	void AddSocket(AActor* _p, FVector _Pos, bool _bRot = false);
 	//ソケットからの除外
 	UFUNCTION(BlueprintCallable)
 	void RemoveSocket(AActor* _p);
@@ -93,8 +98,8 @@ private:
 	void UpdateSocket();
 
 private:
-//入力
-	//移動
+	//入力
+		//移動
 	void MoveForward(float _value);
 	//減速
 	void Deceleration(float _value);
@@ -117,14 +122,17 @@ private:
 	//機体の自動回転の変更
 	void ChangeAutoRot();
 
+	//変更箇所
+	//エンジン音
+	void UpdateEngineAudio(float DeltaTime);
 
 private:
 
 	//コリジョン
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = Collision,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Collision, meta = (AllowPrivateAccess = "true"))
 	UCapsuleComponent* m_pMainCollision;
 	//メッシュ
-	UPROPERTY(EditAnywhere,Category = Mesh,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_pMesh;
 
 	//スプリングアーム
@@ -148,10 +156,10 @@ private:
 	float m_CameraLagMaxDistance;
 
 	//移動コンポーネント
-	UPROPERTY(EditAnywhere,Category = Move,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
 	UFloatingPawnMovement* m_pMovement;
 	//前進速度の倍率
-	UPROPERTY(EditAnywhere,Category = Speed,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
 	float m_ForwardSpeed;
 	//コースに戻る速度
 	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
@@ -162,7 +170,7 @@ private:
 
 
 	//回転速度
-	UPROPERTY(EditAnywhere,Category = Rotation,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
 	float m_RotSpeed;
 	//進行方向に戻る回転速度
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
@@ -172,11 +180,40 @@ private:
 	FVector m_RotPivot;
 
 	//レベル上のコースのスプライン
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
 	USplineComponent* m_pSpline;
 	//強い補正を発生させる距離
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
 	float m_ReturnCourseLen;
+
+
+	//変更箇所
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	UAudioComponent* EngineAudio = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	USoundBase* EngineLoopSound = nullptr;
+
+	//推力(0-1) -> ピッチ/音量
+	UPROPERTY(EditAnywhere, Category = "Audio|Engine", meta = (AllowPrivateAccess = "true"))
+	float EnginePitchMin = 0.9f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Engine", meta = (AllowPrivateAccess = "true"))
+	float EnginePitchMax = 1.6f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Engine", meta = (AllowPrivateAccess = "true"))
+	float EngineVolMin = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Engine", meta = (AllowPrivateAccess = "true"))
+	float EngineVolMax = 1.0f;
+
+	//変化を滑らかにする
+	UPROPERTY(EditAnywhere, Category = "Audio|Engine", meta = (AllowPrivateAccess = "true"))
+	float EngineInterpSpeed = 8.0f;
+
+	float EngineThrustSmoothed = 0.0f;
+
+	//ここまで変更箇所
 
 private:
 	TArray<APlanet*> m_pPlanets;	//重力を受けている星たち
