@@ -1,5 +1,8 @@
 #include "SimpleTriggerActor.h"
 
+#include "Kismet/GameplayStatics.h"   // PlaySound2D
+#include "Sound/SoundBase.h"          // USoundBase
+
 ASimpleTriggerActor::ASimpleTriggerActor()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -13,7 +16,6 @@ ASimpleTriggerActor::ASimpleTriggerActor()
     // Overlap専用
     TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     TriggerBox->SetCollisionResponseToAllChannels(ECR_Overlap);
-    TriggerBox->SetGenerateOverlapEvents(true);
     TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
     TriggerBox->SetGenerateOverlapEvents(true);
 
@@ -50,18 +52,29 @@ void ASimpleTriggerActor::OnTriggerBeginOverlap(
         return;
     }
 
+    // ここで「発火済み」を確定（これ以降は1回きり）
     bTriggered = true;
 
 #if !UE_BUILD_SHIPPING
-    UE_LOG(
-        LogTemp,
-        Log,
-        TEXT("Trigger Activated by %s"),
-        *OtherActor->GetName()
-    );
+    UE_LOG(LogTemp, Log, TEXT("Trigger Activated by %s"), *OtherActor->GetName());
 #endif
 
-    // Blueprint側に処理委譲
+    // -----------------------------
+    // 追加：トリガーSE（2D）を鳴らす
+    // ・UI的に確実に聞こえる
+    // ・距離減衰なし
+    // -----------------------------
+    if (TriggerSE)
+    {
+        UGameplayStatics::PlaySound2D(
+            this,
+            TriggerSE,
+            TriggerSEVolume,
+            TriggerSEPitch
+        );
+    }
+
+    // Blueprint側に処理委譲（演出、フェード、レベル遷移など）
     OnTriggered(OtherActor);
 }
 
@@ -78,12 +91,7 @@ void ASimpleTriggerActor::OnTriggerEndOverlap(
     }
 
 #if !UE_BUILD_SHIPPING
-    UE_LOG(
-        LogTemp,
-        Log,
-        TEXT("Trigger Released by %s"),
-        *OtherActor->GetName()
-    );
+    UE_LOG(LogTemp, Log, TEXT("Trigger Released by %s"), *OtherActor->GetName());
 #endif
 
     OnTriggerReleased(OtherActor);

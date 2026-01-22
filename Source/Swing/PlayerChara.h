@@ -213,6 +213,41 @@ private:
 
 	float EngineThrustSmoothed = 0.0f;
 
+
+	// 回転音の更新（毎フレーム）
+	void UpdateRotateAudio(float DeltaTime);
+
+	// 回転入力の「強さ」だけを音用に保持する（0～1）
+	// ※m_Rot は UpdateRotation でゼロに戻るので、音用に別管理するのが安全
+	float m_RotateInput01 = 0.0f;
+
+	// 回転音を鳴らすコンポーネント（ループ）
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	UAudioComponent* RotateAudio = nullptr;
+
+	// 回転ループ音源（BPで設定）
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	USoundBase* RotateLoopSound = nullptr;
+
+	// 0～1（回転入力）→ ピッチ/音量
+	UPROPERTY(EditAnywhere, Category = "Audio|Rotate", meta = (AllowPrivateAccess = "true"))
+	float RotatePitchMin = 0.9f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Rotate", meta = (AllowPrivateAccess = "true"))
+	float RotatePitchMax = 1.3f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Rotate", meta = (AllowPrivateAccess = "true"))
+	float RotateVolMin = 0.0f;   // 回してない時は無音にしたいなら0
+
+	UPROPERTY(EditAnywhere, Category = "Audio|Rotate", meta = (AllowPrivateAccess = "true"))
+	float RotateVolMax = 0.8f;
+
+	// 変化を滑らかにする（カクつき防止）
+	UPROPERTY(EditAnywhere, Category = "Audio|Rotate", meta = (AllowPrivateAccess = "true"))
+	float RotateInterpSpeed = 10.0f;
+
+	float RotateInputSmoothed = 0.0f;
+
 	//ここまで変更箇所
 
 private:

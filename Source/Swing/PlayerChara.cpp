@@ -131,6 +131,9 @@ void APlayerChara::Tick(float DeltaTime)
 	//エンジン音更新
 	UpdateEngineAudio(DeltaTime);
 
+	// 回転音（追加）
+	UpdateRotateAudio(DeltaTime);
+
 	m_ForwardInput = 0.0f;		//入力準備
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
@@ -152,6 +155,13 @@ void APlayerChara::BeginPlay()
 	{
 		EngineAudio->SetSound(EngineLoopSound);
 		EngineAudio->Play();
+	}
+
+	// 回転音（追加）
+	if (RotateAudio && RotateLoopSound)
+	{
+		RotateAudio->SetSound(RotateLoopSound);
+		RotateAudio->Play();
 	}
 }
 
@@ -571,6 +581,10 @@ void APlayerChara::RotPitch(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Pitch = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 void APlayerChara::RotYaw(float _value)
@@ -578,6 +592,10 @@ void APlayerChara::RotYaw(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Yaw = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 void APlayerChara::RotRoll(float _value)
@@ -585,6 +603,10 @@ void APlayerChara::RotRoll(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Roll = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 
@@ -655,4 +677,25 @@ void APlayerChara::UpdateEngineAudio(float DeltaTime)
 
 	EngineAudio->SetPitchMultiplier(Pitch);
 	EngineAudio->SetVolumeMultiplier(Vol);
+}
+
+void APlayerChara::UpdateRotateAudio(float DeltaTime)
+{
+	if (!RotateAudio) return;
+
+	// 入力(0-1)を滑らかに
+	RotateInputSmoothed = FMath::FInterpTo(
+		RotateInputSmoothed,
+		m_RotateInput01,
+		DeltaTime,
+		RotateInterpSpeed
+	);
+
+	const float Pitch = FMath::Lerp(RotatePitchMin, RotatePitchMax, RotateInputSmoothed);
+	const float Vol = FMath::Lerp(RotateVolMin, RotateVolMax, RotateInputSmoothed);
+
+	RotateAudio->SetPitchMultiplier(Pitch);
+	RotateAudio->SetVolumeMultiplier(Vol);
+
+	// RotateVolMin=0 の時は無音になるだけで「再生は維持」されるのでプチノイズが起きにくい
 }
