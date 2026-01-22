@@ -66,6 +66,17 @@ APlayerChara::APlayerChara()
 		//初期設定部
 	}
 
+	//変更箇所
+	//EngineAudio を生成してアタッチ
+	EngineAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudio"));
+	if (EngineAudio)
+	{
+		EngineAudio->SetupAttachment(RootComponent);
+		EngineAudio->bAutoActivate = false;      //BeginPlayで再生する
+		EngineAudio->bIsUISound = false;         //3D扱い
+		//必要なら Attenuation を BP側で指定する（後述）
+	}
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_Rot.Pitch);
 }
 
@@ -116,6 +127,13 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateCamera(DeltaTime);
 	UpdateSocket();
 
+	//変更箇所
+	//エンジン音更新
+	UpdateEngineAudio(DeltaTime);
+
+	// 回転音（追加）
+	UpdateRotateAudio(DeltaTime);
+
 	m_ForwardInput = 0.0f;		//入力準備
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
@@ -131,12 +149,26 @@ void APlayerChara::BeginPlay()
 	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
 	//常に引っ張られる対象のコーススプラインを取得
 	m_pSpline = GetGameInstance<UMyGameInstance>()->GetCourseSpline();
+
+	//変更箇所
+	if (EngineAudio && EngineLoopSound)
+	{
+		EngineAudio->SetSound(EngineLoopSound);
+		EngineAudio->Play();
+	}
+
+	// 回転音（追加）
+	if (RotateAudio && RotateLoopSound)
+	{
+		RotateAudio->SetSound(RotateLoopSound);
+		RotateAudio->Play();
+	}
 }
 
 void APlayerChara::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	//相手が重力の場合配列に追加
-	if (OtherComp->ComponentHasTag("Gravity")) { m_pPlanets.Add(Cast<APlanet>(OtherActor));}
+	if (OtherComp->ComponentHasTag("Gravity")) { m_pPlanets.Add(Cast<APlanet>(OtherActor)); }
 	//UE_LOG(LogTemp, Warning, TEXT("%f , %f"), Cast<USphereComponent>(OtherComp)->GetScaledSphereRadius(), (OtherComp->GetComponentLocation() - GetActorLocation()).Length());
 }
 
@@ -147,7 +179,7 @@ void APlayerChara::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 }
 
 //ソケットへの追加
-void APlayerChara::AddSocket(AActor* _p, FVector _Pos,bool _bRot)
+void APlayerChara::AddSocket(AActor* _p, FVector _Pos, bool _bRot)
 {
 	//pがないと処理しない
 	if (_p)
@@ -207,8 +239,8 @@ void APlayerChara::SubSpeed(float _Rate)
 void APlayerChara::UpdateRotation(float DeltaTime)
 {
 	//回転入力がある時には動かせる
-	if(!m_Rot.IsZero())
-{
+	if (!m_Rot.IsZero())
+	{
 		//重心に中心を合わせる
 		AddActorLocalOffset(m_RotPivot);
 
@@ -234,10 +266,10 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//自動回転有効時は勝手に進行方向を向く
-	else if(m_ForwardInput == 0.0f)
+	else if (m_ForwardInput == 0.0f)
 	{
 		//進行方向に徐々に向かせる
-		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(),DeltaTime, m_ReturnRotSpeed));
+		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(), DeltaTime, m_ReturnRotSpeed));
 		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
 	}
 }
@@ -247,7 +279,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 {
 	FVector Loc(GetActorLocation());		//プレイヤーの位置
 	FVector AddMoveDire(0.0f);		//足す進行方向
-	FVector AddReturn(0.0f);	
+	FVector AddReturn(0.0f);
 	float CameraLagDistance(m_pSpring->CameraLagMaxDistance);	//現在のカメラのラグの最大距離
 
 	//ーーーーーーーーーーーーーーーー
@@ -266,7 +298,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		{
 			AddMoveDire += m_pMovement->Velocity * -1.0f * 0.8f;
 		}
-		
+
 		//入力時間の変化
 		m_ForwardInputTime += DeltaTime;
 		//カメラのラグの距離を離す
@@ -282,8 +314,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//カメラのラグの距離を変化
 	m_pSpring->CameraLagMaxDistance = FMath::Clamp(CameraLagDistance, 0.1f, m_CameraLagMaxDistance);
 
+	//前進入力の時間を範囲内に収める
 	m_ForwardInputTime = FMath::Clamp(m_ForwardInputTime, 0.0f, 1.0f);
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
+	UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
 
 	//ーーーーーーーーーーーーーーーー
 	//重力を受けている時の処理
@@ -320,9 +353,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 			//
 			//確認
-			/*UE_LOG(LogTemp, Warning, TEXT("%f * (1.0 - (%f / %f = %f) = %f) = %f"), 
-				m_pPlanets[i]->GetGravity(), 
-				Distance, m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius(), 
+			/*UE_LOG(LogTemp, Warning, TEXT("%f * (1.0 - (%f / %f = %f) = %f) = %f"),
+				m_pPlanets[i]->GetGravity(),
+				Distance, m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius(),
 				Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
 				1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
 				Gravity);*/
@@ -382,7 +415,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//コースに戻る補正
 	//ーーーーーーーーーーーーーーーー
 	//常時コースの中心に戻ろうとする
-	if (m_pSpline)
+	//戻る距離が0の時は未設定扱い
+	if (m_pSpline && m_ReturnCourseLen != 0.0f)
 	{
 		FVector NearCourseLoc(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));	//スプライン上の最近点
 		FVector NearCourseVec(NearCourseLoc - Loc);		//最近点に向かうベクトル
@@ -401,7 +435,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			AddReturn -= m_pMovement->Velocity * DeltaTime;
 		}
 		//補正が必要なくなったら打ち消したい
-		else if(!m_ReturnCourseVelo.IsZero())
+		else if (!m_ReturnCourseVelo.IsZero())
 		{
 			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
 			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
@@ -427,7 +461,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//最終的移動変更
 	//m_pMovement->Velocity = m_Velocity + AddReturn;
 	m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
-	
+
 	//移動後の位置
 	Loc = GetActorLocation();
 	//速度の更新
@@ -459,10 +493,10 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 {
 	//カメラに対する入力がある時は回転させる
 	//ない時は進行方向を向く角度に戻ろうとする
-	if(!m_CameraRotInput.IsZero())
+	if (!m_CameraRotInput.IsZero())
 	{
 		//操作変更入力がないときは通常の回転
-		if(m_ChangeCtrl > 0.0f)
+		if (m_ChangeCtrl > 0.0f)
 		{
 			m_pCamera->AddLocalRotation(m_CameraRotInput * DeltaTime * m_CameraRotSpeed);
 			//if (((FVector2D)m_pSpring->GetForwardVector() - FVector2D(0.0f, 0.0f)) <= 1.0f)
@@ -483,7 +517,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//コースに戻る時は変化しない
-	else if(!m_bReturnCource)
+	else if (!m_bReturnCource)
 	{
 		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), (m_pMovement->Velocity.GetSafeNormal() + m_pMesh->GetForwardVector()).Rotation(), DeltaTime, m_CameraReturnRotSpeed));
@@ -499,7 +533,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	m_pCamera->FieldOfView = FMath::Clamp(75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)),75.0f,140.0f);
+	m_pCamera->FieldOfView = FMath::Clamp(75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)), 75.0f, 140.0f);
 }
 
 //ソケットの更新
@@ -539,7 +573,7 @@ void APlayerChara::Deceleration(float _value)
 {
 	if (_value != 0.0f)
 	{
-		
+
 	}
 }
 
@@ -549,6 +583,10 @@ void APlayerChara::RotPitch(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Pitch = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 void APlayerChara::RotYaw(float _value)
@@ -556,6 +594,10 @@ void APlayerChara::RotYaw(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Yaw = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 void APlayerChara::RotRoll(float _value)
@@ -563,6 +605,10 @@ void APlayerChara::RotRoll(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Roll = _value * 0.5f;
+
+		//変更箇所
+		// 音用：最大値で保持（複数軸入力があってもOK）
+		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
 
@@ -610,4 +656,48 @@ void APlayerChara::ChangeCamCon()
 void APlayerChara::ChangeAutoRot()
 {
 	m_bAutoRot = !m_bAutoRot;
+}
+
+//変更箇所
+//エンジン音再生
+void APlayerChara::UpdateEngineAudio(float DeltaTime)
+{
+	if (!EngineAudio) return;
+
+	// 推力0-1（あなたの設計だと入力がそのフレームだけ入るのでここで読む）
+	float Thrust01 = FMath::Clamp(FMath::Abs(m_ForwardInput), 0.0f, 1.0f);
+
+	// ※もし「入力が無い時もエンジン音を速度で変えたい」なら以下でもOK
+	// float Thrust01 = FMath::Clamp(m_pMovement->Velocity.Length() / m_pMovement->MaxSpeed, 0.f, 1.f);
+
+	EngineThrustSmoothed = FMath::FInterpTo(
+		EngineThrustSmoothed, Thrust01, DeltaTime, EngineInterpSpeed
+	);
+
+	const float Pitch = FMath::Lerp(EnginePitchMin, EnginePitchMax, EngineThrustSmoothed);
+	const float Vol = FMath::Lerp(EngineVolMin, EngineVolMax, EngineThrustSmoothed);
+
+	EngineAudio->SetPitchMultiplier(Pitch);
+	EngineAudio->SetVolumeMultiplier(Vol);
+}
+
+void APlayerChara::UpdateRotateAudio(float DeltaTime)
+{
+	if (!RotateAudio) return;
+
+	// 入力(0-1)を滑らかに
+	RotateInputSmoothed = FMath::FInterpTo(
+		RotateInputSmoothed,
+		m_RotateInput01,
+		DeltaTime,
+		RotateInterpSpeed
+	);
+
+	const float Pitch = FMath::Lerp(RotatePitchMin, RotatePitchMax, RotateInputSmoothed);
+	const float Vol = FMath::Lerp(RotateVolMin, RotateVolMax, RotateInputSmoothed);
+
+	RotateAudio->SetPitchMultiplier(Pitch);
+	RotateAudio->SetVolumeMultiplier(Vol);
+
+	// RotateVolMin=0 の時は無音になるだけで「再生は維持」されるのでプチノイズが起きにくい
 }
