@@ -314,8 +314,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//カメラのラグの距離を変化
 	m_pSpring->CameraLagMaxDistance = FMath::Clamp(CameraLagDistance, 0.1f, m_CameraLagMaxDistance);
 
+	//前進入力の時間を範囲内に収める
 	m_ForwardInputTime = FMath::Clamp(m_ForwardInputTime, 0.0f, 1.0f);
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
+	UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
 
 	//ーーーーーーーーーーーーーーーー
 	//重力を受けている時の処理
@@ -414,7 +415,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//コースに戻る補正
 	//ーーーーーーーーーーーーーーーー
 	//常時コースの中心に戻ろうとする
-	if (m_pSpline)
+	//戻る距離が0の時は未設定扱い
+	if (m_pSpline && m_ReturnCourseLen != 0.0f)
 	{
 		FVector NearCourseLoc(m_pSpline->FindLocationClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));	//スプライン上の最近点
 		FVector NearCourseVec(NearCourseLoc - Loc);		//最近点に向かうベクトル
