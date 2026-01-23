@@ -460,7 +460,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 	//最終的移動変更
 	//m_pMovement->Velocity = m_Velocity + AddReturn;
-	m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
+	//m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
+	m_pMovement->Acceleration = (AddMoveDire * DeltaTime + AddReturn).Length();
+	AddMovementInput((AddMoveDire* DeltaTime + AddReturn).GetSafeNormal());
 
 	//移動後の位置
 	Loc = GetActorLocation();
