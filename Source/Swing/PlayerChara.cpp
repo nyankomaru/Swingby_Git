@@ -247,7 +247,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		//現在の向き
 		FVector VecDire[3](GetActorForwardVector(), GetActorRightVector(), GetActorUpVector());
 		//回転軸
-		FVector RotAxis[3](m_pCamera->GetRightVector(), m_pCamera->GetUpVector(), m_pCamera->GetForwardVector());
+		//FVector RotAxis[3](m_pCamera->GetRightVector(), m_pCamera->GetUpVector(), m_pCamera->GetForwardVector());
+		FVector RotAxis[3](m_pSpring->GetRightVector(), m_pSpring->GetUpVector(), m_pSpring->GetForwardVector());
 		//回転後の各ベクトルを作成
 		for (int i = 0; i < 3; ++i)
 		{
