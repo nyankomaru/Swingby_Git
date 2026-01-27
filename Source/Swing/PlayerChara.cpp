@@ -423,36 +423,40 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		FVector NearCourseVec(NearCourseLoc - Loc);		//最近点に向かうベクトル
 		float NearCourseLen(NearCourseVec.Length());	//最近点との距離
 
+
+
 		//コースの中心に向かうベクトル
 		//離れているほどに長くなる
 		//AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
 
 		//距離が離れすぎた時は強めに戻す
-		if (NearCourseLen >= m_ReturnCourseLen)
-		{
-			m_bReturnCource = true;
-			AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
-			m_ReturnCourseVelo += AddReturn;
-			AddReturn -= m_pMovement->Velocity * DeltaTime;
-		}
-		//補正が必要なくなったら打ち消したい
-		else if (!m_ReturnCourseVelo.IsZero())
-		{
-			//AddReturn -= m_ReturnCourseVelo * DeltaTime;
-			m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
-			//if(NearCourseLen <= 200000.0f)
-			//if (m_ReturnCourseVelo.Length() <= 100000.0f)
-			//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
-			{
-				m_ReturnCourseVelo = FVector(0.0f);
-				m_bReturnCource = false;
-				//m_pMovement->Velocity = m_Velocity.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
-				//現在の移動を大きさを保ったままスプライン方向に変更
-				FVector NowVelo(m_pMovement->Velocity);
-				AddReturn -= NowVelo;
-				AddReturn += NowVelo.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
-			}
-		}
+		//if (NearCourseLen >= m_ReturnCourseLen)
+		//{
+		//	m_bReturnCource = true;
+		//	AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
+		//	m_ReturnCourseVelo += AddReturn;
+		//	AddReturn -= m_pMovement->Velocity * DeltaTime;
+		//}
+		////補正が必要なくなったら打ち消したい
+		//else if (!m_ReturnCourseVelo.IsZero())
+		//{
+		//	//AddReturn -= m_ReturnCourseVelo * DeltaTime;
+		//	m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
+		//	//if(NearCourseLen <= 200000.0f)
+		//	//if (m_ReturnCourseVelo.Length() <= 100000.0f)
+		//	//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
+		//	{
+		//		m_ReturnCourseVelo = FVector(0.0f);
+		//		m_bReturnCource = false;
+		//		//m_pMovement->Velocity = m_Velocity.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
+		//		//現在の移動を大きさを保ったままスプライン方向に変更
+		//		FVector NowVelo(m_pMovement->Velocity);
+		//		AddReturn -= NowVelo;
+		//		AddReturn += NowVelo.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
+		//	}
+		//}
+
+		AddReturn = NearCourseVec * NearCourseLen * DeltaTime * DeltaTime;
 
 		//スプラインの位置の確認用
 		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
