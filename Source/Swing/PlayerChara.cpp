@@ -423,20 +423,32 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		FVector NearCourseVec(NearCourseLoc - Loc);		//最近点に向かうベクトル
 		float NearCourseLen(NearCourseVec.Length());	//最近点との距離
 
-
-
 		//コースの中心に向かうベクトル
 		//離れているほどに長くなる
 		//AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
 
 		//距離が離れすぎた時は強めに戻す
-		//if (NearCourseLen >= m_ReturnCourseLen)
-		//{
-		//	m_bReturnCource = true;
-		//	AddReturn = NearCourseVec.GetSafeNormal() * NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
-		//	m_ReturnCourseVelo += AddReturn;
-		//	AddReturn -= m_pMovement->Velocity * DeltaTime;
-		//}
+		if (NearCourseLen >= m_ReturnCourseLen)
+		{
+			//m_bReturnCource = true;
+			//AddReturn = NearCourseVec * m_ReturnCourseSpeed * DeltaTime;
+			//m_ReturnCourseVelo += AddReturn;
+			//AddReturn -= m_pMovement->Velocity * DeltaTime;
+			m_pMovement->Velocity = m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World) * (m_Velocity.Length() * 0.006f);
+			m_pMovement->Velocity += NearCourseVec * DeltaTime;
+			//現在の移動方向をコース中心方向に回転させる
+			//m_pMovement->Velocity = (UKismetMathLibrary::FindLookAtRotation(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World), NearCourseVec.GetSafeNormal()) * DeltaTime * m_ReturnCourseSpeed).RotateVector(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
+			//m_pMovement->Velocity = (UKismetMathLibrary::FindLookAtRotation(m_pMovement->Velocity.GetSafeNormal(), NearCourseVec.GetSafeNormal()) * DeltaTime * m_ReturnCourseSpeed).RotateVector(m_pMovement->Velocity);
+
+			//少し内側を向かうベクトル
+			//FVector InSideVec((UKismetMathLibrary::FindLookAtRotation(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World), NearCourseVec.GetSafeNormal()))
+			//FRotator InSideVec((UKismetMathLibrary::FindLookAtRotation(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World), NearCourseVec.GetSafeNormal())));
+			//FVector ISV((InSideVec * m_ReturnCourseSpeed).RotateVector(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)));
+			//AddMovementInput(ISV.GetSafeNormal());
+		}
+
+		
+
 		////補正が必要なくなったら打ち消したい
 		//else if (!m_ReturnCourseVelo.IsZero())
 		//{
@@ -456,7 +468,11 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//	}
 		//}
 
-		AddReturn = NearCourseVec * NearCourseLen * DeltaTime * DeltaTime;
+		/*AddReturn -= m_ReturnCourseVelo;
+		m_ReturnCourseVelo = NearCourseVec * NearCourseLen * 0.1f;
+		AddReturn += m_ReturnCourseVelo;*/
+
+		//AddReturn = NearCourseVec * NearCourseLen * DeltaTime * DeltaTime;
 
 		//スプラインの位置の確認用
 		DrawDebugLine(GetWorld(), Loc, Loc + NearCourseVec, FColor::Orange);
@@ -466,8 +482,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//最終的移動変更
 	//m_pMovement->Velocity = m_Velocity + AddReturn;
 	//m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
-	m_pMovement->Acceleration = (AddMoveDire * DeltaTime + AddReturn).Length();
-	AddMovementInput((AddMoveDire* DeltaTime + AddReturn).GetSafeNormal());
+	m_pMovement->Acceleration = (AddMoveDire * DeltaTime + AddReturn * DeltaTime).Length();
+	AddMovementInput((AddMoveDire + AddReturn).GetSafeNormal());
 
 	//移動後の位置
 	Loc = GetActorLocation();
