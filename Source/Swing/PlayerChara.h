@@ -89,6 +89,8 @@ private:
 
 	//カメラの更新
 	void UpdateCamera(float DeltaTime);
+	//カメラの位置更新
+	void UpdateCameraMove(float DeltaTime);
 	//カメラの回転
 	void UpdateCameraRot(float DeltaTime);
 	//カメラの画角の変更
@@ -132,7 +134,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Collision, meta = (AllowPrivateAccess = "true"))
 	UCapsuleComponent* m_pMainCollision;
 	//メッシュ
-	UPROPERTY(EditAnywhere, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_pMesh;
 
 	//スプリングアーム
@@ -156,7 +158,7 @@ private:
 	float m_CameraLagMaxDistance;
 
 	//移動コンポーネント
-	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Move, meta = (AllowPrivateAccess = "true"))
 	UFloatingPawnMovement* m_pMovement;
 	//前進速度の倍率
 	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
@@ -167,6 +169,9 @@ private:
 	//コースに戻る速度の最低値
 	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
 	float m_MinReturnCourseSpeed;
+	//コース端の減速率
+	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
+	float M_CourseOutRate;
 
 
 	//回転速度

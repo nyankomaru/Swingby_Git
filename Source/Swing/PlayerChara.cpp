@@ -317,7 +317,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 	//前進入力の時間を範囲内に収める
 	m_ForwardInputTime = FMath::Clamp(m_ForwardInputTime, 0.0f, 1.0f);
-	UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pSpring->CameraLagMaxDistance);
 
 	//ーーーーーーーーーーーーーーーー
 	//重力を受けている時の処理
@@ -434,8 +434,12 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//AddReturn = NearCourseVec * m_ReturnCourseSpeed * DeltaTime;
 			//m_ReturnCourseVelo += AddReturn;
 			//AddReturn -= m_pMovement->Velocity * DeltaTime;
-			m_pMovement->Velocity = m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World) * (m_Velocity.Length() * 0.006f);
+
+			//進行方向に向かせた後に内側を向かせる
+			m_pMovement->Velocity = m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World) * (m_pMovement->Velocity.Length() * M_CourseOutRate);
 			m_pMovement->Velocity += NearCourseVec * DeltaTime;
+
+
 			//現在の移動方向をコース中心方向に回転させる
 			//m_pMovement->Velocity = (UKismetMathLibrary::FindLookAtRotation(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World), NearCourseVec.GetSafeNormal()) * DeltaTime * m_ReturnCourseSpeed).RotateVector(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
 			//m_pMovement->Velocity = (UKismetMathLibrary::FindLookAtRotation(m_pMovement->Velocity.GetSafeNormal(), NearCourseVec.GetSafeNormal()) * DeltaTime * m_ReturnCourseSpeed).RotateVector(m_pMovement->Velocity);
@@ -551,6 +555,12 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	/*m_ForwardInput = 0.0f;*/
 
 	//m_pCamera->SetRelativeRotation(m_CameraRot);
+}
+
+//カメラの位置更新
+void APlayerChara::UpdateCameraMove(float DeltaTime)
+{
+
 }
 
 //カメラの画角の変更
