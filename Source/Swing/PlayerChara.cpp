@@ -214,7 +214,7 @@ int APlayerChara::GetGraNum()
 float APlayerChara::GetSpeed()
 {
 	//return m_Speed;
-	return m_pMovement->Velocity.Length() / 10.0f;
+	return m_pMovement->Velocity.Length();
 }
 
 //“ü—Í‚ÌŽæ“¾
