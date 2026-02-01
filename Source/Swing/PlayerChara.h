@@ -174,9 +174,12 @@ private:
 	float M_CourseOutRate;
 
 
-	//回転速度
+	//最高回転速度
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
-	float m_RotSpeed;
+	float m_MaxRotSpeed;
+	//最高回転速度に達する速度
+	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
+	float m_ReachMaxRotSpeed;
 	//進行方向に戻る回転速度
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
 	float m_ReturnRotSpeed;
@@ -266,7 +269,9 @@ private:
 	FVector m_Velocity;		//補正を除いた移動量
 	FVector m_ReturnCourseVelo;	//ステージに戻るベクトル
 
-	FRotator m_Rot;			//回転角度
+	FRotator m_Rot;			//回転入力
+	FRotator m_PreRotIn;	//直前の回転入力
+	FRotator m_NowRotSpeed;	//現在の回転速度
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度

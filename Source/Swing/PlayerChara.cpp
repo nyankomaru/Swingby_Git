@@ -21,9 +21,12 @@ APlayerChara::APlayerChara()
 	, m_CameraRot(0.0f)
 	, m_CameraRotInput(0.0f)
 	, m_ForwardInput(0.0f)
+	, m_PreRotIn(0.0f)
+	, m_NowRotSpeed(0.0f)
 	, m_ChangeCtrl(0.0f)
 	, m_Speed(0.0f)
 	, m_ForwardInputTime(0.0f)
+	, m_ReachMaxRotSpeed(1.0f)
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
@@ -136,7 +139,7 @@ void APlayerChara::Tick(float DeltaTime)
 
 	m_ForwardInput = 0.0f;		//入力準備
 
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_pMovement->Acceleration);
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), DeltaTime);
 }
 
 //ゲームスタート時
@@ -241,6 +244,27 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	//回転入力がある時には動かせる
 	if (!m_Rot.IsZero())
 	{
+		//入力分を足しこみ1以上にはしない
+		//m_NowRotSpeed = (m_NowRotSpeed += DeltaTime > 1.0f) ? 1.0f : m_NowRotSpeed += DeltaTime;
+
+		//各方向の入力の有無により増加減少
+		for (int i = 0; i < 3; ++i)
+		{
+			if (*(&m_Rot.Pitch + i)  != 0.0f) 
+			{
+				//方向が変わったら即0に
+				if (FMath::Sign(*(&m_Rot.Pitch + i)) != FMath::Sign(*(&m_PreRotIn.Pitch + i))) { *(&m_NowRotSpeed.Pitch + i) = 0.0f; }
+
+				*(&m_NowRotSpeed.Pitch + i) += FMath::Sign(*(&m_Rot.Pitch + i)) * DeltaTime / m_ReachMaxRotSpeed;
+			}
+			else
+			{
+				*(&m_NowRotSpeed.Pitch + i) -= FMath::Sign(*(&m_NowRotSpeed.Pitch + i)) * DeltaTime / m_ReachMaxRotSpeed;
+			}
+			//0～1に収める
+			*(&m_NowRotSpeed.Pitch + i) = FMath::Clamp(fabs(*(&m_NowRotSpeed.Pitch + i)), 0.0f, 1.0f) * FMath::Sign(*(&m_NowRotSpeed.Pitch + i));
+		}
+
 		//重心に中心を合わせる
 		AddActorLocalOffset(m_RotPivot);
 
@@ -254,7 +278,8 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		{
 			for (int n = 0; n < 3; ++n)
 			{
-				VecDire[i] = VecDire[i].RotateAngleAxis(*(&(m_Rot.Pitch) + n) * DeltaTime * m_RotSpeed, RotAxis[n]);
+
+				VecDire[i] = VecDire[i].RotateAngleAxis(DeltaTime * m_MaxRotSpeed * (*(&m_NowRotSpeed.Pitch + n)), RotAxis[n]);
 			}
 		}
 		//回転を適応(3ベクトルからRotatorを生成)
@@ -262,17 +287,32 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 
 		//ずらした中心を戻す
 		AddActorLocalOffset(-m_RotPivot);
-
-		//次の回転の為にリセット
-		m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 	}
 	//自動回転有効時は勝手に進行方向を向く
-	else if (m_ForwardInput == 0.0f)
+	else
 	{
-		//進行方向に徐々に向かせる
-		SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(), DeltaTime, m_ReturnRotSpeed));
-		//SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pCamera->GetForwardVector().Rotation(), DeltaTime, m_ReturnRotSpeed));
+		//回転入力が無い時の回転速度の減少
+		//m_NowRotSpeed = (m_NowRotSpeed -= DeltaTime < 0.0f) ? 0.0f : m_NowRotSpeed -= DeltaTime;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			*(&m_NowRotSpeed.Pitch + i) -= FMath::Sign(*(&m_NowRotSpeed.Pitch + i)) * DeltaTime / m_ReachMaxRotSpeed;
+		}
+
+		//コース外に出た時
+		if (m_ForwardInput == 0.0f || m_bReturnCource)
+		{
+			//進行方向に徐々に向かせる
+			SetActorRotation(UKismetMathLibrary::RInterpTo(GetActorRotation(), m_pMovement->Velocity.Rotation(), DeltaTime, m_ReturnRotSpeed * (1.0f - (m_NowRotSpeed.Pitch + m_NowRotSpeed.Yaw + m_NowRotSpeed.Roll) / 3.0f)));
+		}
 	}
+
+	//直前の入力を記録
+	m_PreRotIn = m_Rot;
+	//次の回転の為にリセット
+	m_Rot = FRotator(0.0f, 0.0f, 0.0f);
+
+	//UE_LOG(LogTemp, Warning, TEXT("%f , %f , %f"), *(&m_NowRotSpeed.Pitch + 1), m_NowRotSpeed.Yaw, m_NowRotSpeed.Roll);
 }
 
 //移動の更新
@@ -427,6 +467,9 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//離れているほどに長くなる
 		//AddReturn = NearCourseVec.GetSafeNormal()* NearCourseLen * m_ReturnCourseSpeed * DeltaTime;
 
+		//変化の可能性がある前に固定
+		m_bReturnCource = false;
+
 		//距離が離れすぎた時は強めに戻す
 		if (NearCourseLen >= m_ReturnCourseLen)
 		{
@@ -439,6 +482,8 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			m_pMovement->Velocity = m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World) * (m_pMovement->Velocity.Length() * M_CourseOutRate);
 			m_pMovement->Velocity += NearCourseVec * DeltaTime;
 
+			//コース外であることを示す
+			m_bReturnCource = true;
 
 			//現在の移動方向をコース中心方向に回転させる
 			//m_pMovement->Velocity = (UKismetMathLibrary::FindLookAtRotation(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World), NearCourseVec.GetSafeNormal()) * DeltaTime * m_ReturnCourseSpeed).RotateVector(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World));
@@ -450,27 +495,6 @@ void APlayerChara::UpdateMove(float DeltaTime)
 			//FVector ISV((InSideVec * m_ReturnCourseSpeed).RotateVector(m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)));
 			//AddMovementInput(ISV.GetSafeNormal());
 		}
-
-		
-
-		////補正が必要なくなったら打ち消したい
-		//else if (!m_ReturnCourseVelo.IsZero())
-		//{
-		//	//AddReturn -= m_ReturnCourseVelo * DeltaTime;
-		//	m_ReturnCourseVelo -= m_ReturnCourseVelo * DeltaTime;
-		//	//if(NearCourseLen <= 200000.0f)
-		//	//if (m_ReturnCourseVelo.Length() <= 100000.0f)
-		//	//if (FVector::DotProduct(m_pMovement->Velocity,m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World)) <= 1.0f)
-		//	{
-		//		m_ReturnCourseVelo = FVector(0.0f);
-		//		m_bReturnCource = false;
-		//		//m_pMovement->Velocity = m_Velocity.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
-		//		//現在の移動を大きさを保ったままスプライン方向に変更
-		//		FVector NowVelo(m_pMovement->Velocity);
-		//		AddReturn -= NowVelo;
-		//		AddReturn += NowVelo.Length() * m_pSpline->FindDirectionClosestToWorldLocation(Loc, ESplineCoordinateSpace::World);
-		//	}
-		//}
 
 		/*AddReturn -= m_ReturnCourseVelo;
 		m_ReturnCourseVelo = NearCourseVec * NearCourseLen * 0.1f;
@@ -615,7 +639,7 @@ void APlayerChara::RotPitch(float _value)
 {
 	if (_value != 0.0f)
 	{
-		m_Rot.Pitch = _value * 0.5f;
+		m_Rot.Pitch = _value;
 
 		//変更箇所
 		// 音用：最大値で保持（複数軸入力があってもOK）
@@ -626,7 +650,7 @@ void APlayerChara::RotYaw(float _value)
 {
 	if (_value != 0.0f)
 	{
-		m_Rot.Yaw = _value * 0.5f;
+		m_Rot.Yaw = _value;
 
 		//変更箇所
 		// 音用：最大値で保持（複数軸入力があってもOK）
@@ -637,7 +661,7 @@ void APlayerChara::RotRoll(float _value)
 {
 	if (_value != 0.0f)
 	{
-		m_Rot.Roll = _value * 0.5f;
+		m_Rot.Roll = _value;
 
 		//変更箇所
 		// 音用：最大値で保持（複数軸入力があってもOK）
