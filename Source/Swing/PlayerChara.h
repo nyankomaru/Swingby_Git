@@ -143,6 +143,9 @@ private:
 	//カメラ
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* m_pCamera;
+	//カメラの標準の傾き
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	FRotator m_DefaCameraRot;
 
 	//カメラの回転速度
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -275,6 +278,7 @@ private:
 	FRotator m_CameraRot;	//カメラの向いている方向
 	FRotator m_CameraRotInput;	//カメラの回転方向
 	float m_ForwardInput;	//前進速度
+	float m_PreForwardInput;	//直前の前進入力
 	float m_Speed;		//移動速度
 	float m_ForwardInputTime;	//前進入力継続時間
 
@@ -284,4 +288,5 @@ private:
 	bool m_bCamConChange;	//カメラ操作変更
 	bool m_bAutoRot;	//機体の自動回転の有無
 	bool m_bReturnCource;	//コースに
+	bool m_bInputAfter;		//入力直後か否か
 };

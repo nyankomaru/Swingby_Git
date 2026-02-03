@@ -21,6 +21,7 @@ APlayerChara::APlayerChara()
 	, m_CameraRot(0.0f)
 	, m_CameraRotInput(0.0f)
 	, m_ForwardInput(0.0f)
+	, m_PreForwardInput(0.0f)
 	, m_PreRotIn(0.0f)
 	, m_NowRotSpeed(0.0f)
 	, m_ChangeCtrl(0.0f)
@@ -31,6 +32,7 @@ APlayerChara::APlayerChara()
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
 	, m_bReturnCource(false)
+	, m_bInputAfter(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -136,8 +138,6 @@ void APlayerChara::Tick(float DeltaTime)
 
 	// 回転音（追加）
 	UpdateRotateAudio(DeltaTime);
-
-	m_ForwardInput = 0.0f;		//入力準備
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), DeltaTime);
 }
@@ -279,7 +279,7 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 			for (int n = 0; n < 3; ++n)
 			{
 
-				VecDire[i] = VecDire[i].RotateAngleAxis(DeltaTime * m_MaxRotSpeed * (*(&m_NowRotSpeed.Pitch + n)), RotAxis[n]);
+				VecDire[i] = VecDire[i].RotateAngleAxis((*(&m_Rot.Pitch + n)) * fabs(*(&m_NowRotSpeed.Pitch + n)) * DeltaTime * m_MaxRotSpeed, RotAxis[n]);
 			}
 		}
 		//回転を適応(3ベクトルからRotatorを生成)
@@ -307,12 +307,13 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("Input : RotSpeed \n%f,%f\n%f,%f\n%f,%f"), m_Rot.Pitch, m_NowRotSpeed.Pitch, m_Rot.Yaw, m_NowRotSpeed.Yaw, m_Rot.Roll, m_NowRotSpeed.Roll);
+	
 	//直前の入力を記録
 	m_PreRotIn = m_Rot;
 	//次の回転の為にリセット
 	m_Rot = FRotator(0.0f, 0.0f, 0.0f);
 
-	//UE_LOG(LogTemp, Warning, TEXT("%f , %f , %f"), *(&m_NowRotSpeed.Pitch + 1), m_NowRotSpeed.Yaw, m_NowRotSpeed.Roll);
 }
 
 //移動の更新
@@ -351,6 +352,29 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		//カメラのラグの距離を近づける
 		CameraLagDistance -= m_CameraLagDistanceSpeed * DeltaTime;
 	}
+
+	if (m_PreForwardInput == m_ForwardInput)
+	{
+
+	}
+	else if (m_ForwardInput == 1.0f)
+	{
+
+	}
+
+	if (m_PreForwardInput == m_ForwardInput && m_ForwardInputTime == 0.0f)
+	{
+		m_bInputAfter = true;
+		m_ForwardInputTime = 3.0f;
+	}
+	else if (m_ForwardInputTime != 0.0f)
+	{
+		m_ForwardInputTime = (m_ForwardInputTime - DeltaTime <= 0.0f) ? 0.0f : m_ForwardInputTime - DeltaTime;
+	}
+
+	//直前の入力を保存
+	m_PreForwardInput = m_ForwardInput;
+	m_ForwardInput = 0.0f;		//入力準備
 
 	//カメラのラグの距離を変化
 	m_pSpring->CameraLagMaxDistance = FMath::Clamp(CameraLagDistance, 0.1f, m_CameraLagMaxDistance);
@@ -401,6 +425,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 				1.0f - Distance / (m_pPlanets[i]->GetGradius() - m_pPlanets[i]->GetRadius()),
 				Gravity);*/
 		}
+
 		//遠心力を足す
 		//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * m_pMovement->Velocity.Length() / Distance;
 		//MoveDire += PlanetDire.GetSafeNormal() * -1.0f * (m_pMovement->Velocity.Length() / Distance);
@@ -567,8 +592,13 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 		//次の入力に備えてリセット
 		m_CameraRotInput = FRotator(0.0f, 0.0f, 0.0f);
 	}
+	else
+	{
+		m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(),m_DefaCameraRot, DeltaTime, m_CameraReturnRotSpeed));
+	}
+
 	//コースに戻る時は変化しない
-	else if (!m_bReturnCource)
+	//else if (!m_bReturnCource)
 	{
 		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
 		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), (m_pMovement->Velocity.GetSafeNormal() + m_pMesh->GetForwardVector()).Rotation(), DeltaTime, m_CameraReturnRotSpeed));
@@ -590,7 +620,18 @@ void APlayerChara::UpdateCameraMove(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	m_pCamera->FieldOfView = FMath::Clamp(75.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)), 75.0f, 140.0f);
+	if (m_bInputAfter)
+	{
+		m_pCamera->FieldOfView = 70.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 80.0f;
+	}
+	else
+	{
+		float NowView(m_pCamera->FieldOfView);
+
+		NowView = FMath::Clamp(NowView -= 5.0f * DeltaTime, 70.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 40.0f, 150.0f);
+
+		m_pCamera->FieldOfView = NowView;
+	}
 }
 
 //ソケットの更新
@@ -610,7 +651,6 @@ void APlayerChara::UpdateSocket()
 		}
 	}
 }
-
 
 //移動
 void APlayerChara::MoveForward(float _value)
