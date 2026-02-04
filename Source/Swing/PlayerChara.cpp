@@ -28,12 +28,12 @@ APlayerChara::APlayerChara()
 	, m_ChangeCtrl(0.0f)
 	, m_Speed(0.0f)
 	, m_ForwardInputTime(0.0f)
+	, m_StrongFOVTimer(0.0f)
 	, m_ReachMaxRotSpeed(1.0f)
 	, m_bCollisiON(false)
 	, m_bCamConChange(false)
 	, m_bAutoRot(false)
 	, m_bReturnCource(false)
-	, m_bInputAfter(false)
 {
 	m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("m_pMesh");
 	if (m_pMesh)
@@ -339,7 +339,7 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Input : RotSpeed \n%f,%f\n%f,%f\n%f,%f"), m_Rot.Pitch, m_NowRotSpeed.Pitch, m_Rot.Yaw, m_NowRotSpeed.Yaw, m_Rot.Roll, m_NowRotSpeed.Roll);
+	//UE_LOG(LogTemp, Warning, TEXT("Input : RotSpeed \n%f,%f\n%f,%f\n%f,%f"), m_Rot.Pitch, m_NowRotSpeed.Pitch, m_Rot.Yaw, m_NowRotSpeed.Yaw, m_Rot.Roll, m_NowRotSpeed.Roll);
 	
 	//直前の入力を記録
 	m_PreRotIn = m_Rot;
@@ -385,23 +385,10 @@ void APlayerChara::UpdateMove(float DeltaTime)
 		CameraLagDistance -= m_CameraLagDistanceSpeed * DeltaTime;
 	}
 
-	if (m_PreForwardInput == m_ForwardInput)
+	//入力の変化（有効化）があった少し後は画角を広くする
+	if (m_PreForwardInput != m_ForwardInput && m_ForwardInput == 1.0f && m_StrongFOVTimer == 0.0f)
 	{
-
-	}
-	else if (m_ForwardInput == 1.0f)
-	{
-
-	}
-
-	if (m_PreForwardInput == m_ForwardInput && m_ForwardInputTime == 0.0f)
-	{
-		m_bInputAfter = true;
-		m_ForwardInputTime = 3.0f;
-	}
-	else if (m_ForwardInputTime != 0.0f)
-	{
-		m_ForwardInputTime = (m_ForwardInputTime - DeltaTime <= 0.0f) ? 0.0f : m_ForwardInputTime - DeltaTime;
+		m_StrongFOVTimer = 0.1f;
 	}
 
 	//直前の入力を保存
@@ -652,18 +639,23 @@ void APlayerChara::UpdateCameraMove(float DeltaTime)
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	if (m_bInputAfter)
+	float NowFOV(m_pCamera->FieldOfView);	//現在の画角
+	float NowAddFOV(NowFOV - 70.0f);		//現在基本値から追加されている画角
+	float AddFOV(0.0f);		//追加したい角度
+
+	if (m_StrongFOVTimer == 0.0f)
 	{
-		m_pCamera->FieldOfView = 70.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 80.0f;
+		AddFOV = MyCalcu::ToValueF(NowAddFOV,(m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 40.0f, 1.0f, DeltaTime);
 	}
 	else
 	{
-		float NowView(m_pCamera->FieldOfView);
-
-		NowView = FMath::Clamp(NowView -= 5.0f * DeltaTime, 70.0f + (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 40.0f, 150.0f);
-
-		m_pCamera->FieldOfView = NowView;
+		AddFOV = MyCalcu::ToValueF(NowAddFOV, (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 100.0f, 20.0f, DeltaTime);
+		m_StrongFOVTimer = MyCalcu::ToValueF(m_StrongFOVTimer, 0.0f, 1.0f, DeltaTime);
 	}
+
+	m_pCamera->FieldOfView = 70.0f + MyCalcu::Clamp(AddFOV, 0.0f, 90.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
 }
 
 //ソケットの更新
