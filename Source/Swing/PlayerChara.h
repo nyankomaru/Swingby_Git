@@ -283,6 +283,7 @@ private:
 	float m_PreForwardInput;
 	float m_Speed;
 	float m_ForwardInputTime;
+	float m_StrongFOVTimer;		//画角をより広くするタイマー
 
 	float m_ChangeCtrl;
 
@@ -290,5 +291,4 @@ private:
 	bool m_bCamConChange;
 	bool m_bAutoRot;
 	bool m_bReturnCource;
-	bool m_bInputAfter;
 };
