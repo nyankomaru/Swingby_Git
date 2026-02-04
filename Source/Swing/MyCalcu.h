@@ -13,8 +13,5 @@ public:
 	MyCalcu();
 	~MyCalcu();
 
-	static float ToValueF(float Current,float Target,float Speed,float DeltaTime);
-	
-	template<class X>
-	static X Clamp(X Value, X Min, X Max);
+	static float ToValue(float Current,float Target,float Speed,float DeltaTime);
 };
