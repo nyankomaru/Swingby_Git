@@ -4,22 +4,30 @@
 #include "GameFramework/Actor.h"
 #include "BGMManager.generated.h"
 
-// 前方宣言（includeを減らしてコンパイルを軽くする）
+// =========================
+// 前方宣言：依存を減らす
+// =========================
+// ヘッダの include を最小限にし、コンパイル時間と影響範囲を抑えるため、型だけ宣言します。
+// 実体の include は .cpp 側で行います。
 class UAudioComponent;
 class USoundBase;
 
 /**
- * BGM を管理するための常駐Actor
+ * =========================
+ * BGM管理Actor（常駐）
+ * =========================
  *
- * ・レベルに1つ置くだけで BGM を鳴らせる
- * ・再生 / 停止 / フェード / 曲変更 をまとめて担当する
+ * 役割：
+ * ・レベル（マップ）内に 1 つ置くだけで BGM 再生を開始できる
+ * ・「再生 / 停止 / フェード / 曲切替」の操作をこの Actor に集約する
  *
- * 使い方（例）
- * 1) BP_BGMManager（このクラス派生BP）を作成
- * 2) レベルに1つ配置
+ * 想定運用（例）：
+ * 1) 本クラスを継承した Blueprint（例：BP_BGMManager）を作成
+ * 2) レベルに 1 つだけ配置
  * 3) DefaultBGM を設定し、bAutoPlayDefaultBGM を true にする
  *
- * ※レベル遷移でBGMを継続したい場合は、後から GameInstance 管理にするのが理想
+ * 補足：
+ * ・レベル遷移後も BGM を継続する設計にする場合は、GameInstance 管理へ移行するのが一般的です。
  */
 UCLASS()
 class SWING_API ABGMManager : public AActor
@@ -30,45 +38,58 @@ public:
 	ABGMManager();
 
 protected:
-	// ゲーム開始時に呼ばれる
+	// =========================
+	// 起動時処理
+	// =========================
+	// Actor の開始タイミングで 1 回だけ呼ばれます。
 	virtual void BeginPlay() override;
 
 public:
+	// =========================
+	// 公開API：BGM操作
+	// =========================
+
 	/**
-	 * BGMを再生する
-	 * @param BGM         再生する音源
-	 * @param FadeInTime  フェードイン時間（0なら即再生）
+	 * BGMを再生します（必要に応じてフェードイン）。
+	 * @param BGM        再生する音源
+	 * @param FadeInTime フェードイン時間（秒）。0 なら即時再生
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Audio|BGM")
 	void PlayBGM(USoundBase* BGM, float FadeInTime = 0.5f);
 
 	/**
-	 * BGMを停止する
-	 * @param FadeOutTime フェードアウト時間（0なら即停止）
+	 * BGMを停止します（必要に応じてフェードアウト）。
+	 * @param FadeOutTime フェードアウト時間（秒）。0 なら即時停止
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Audio|BGM")
 	void StopBGM(float FadeOutTime = 0.5f);
 
 	/**
-	 * BGMを切り替える（フェードアウト → フェードイン）
-	 * @param NewBGM       切り替える音源
-	 * @param FadeOutTime  フェードアウト時間
-	 * @param FadeInTime   フェードイン時間
+	 * BGMを切り替えます（フェードアウト → フェードイン）。
+	 * @param NewBGM      切り替え先の音源
+	 * @param FadeOutTime フェードアウト時間（秒）
+	 * @param FadeInTime  フェードイン時間（秒）
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Audio|BGM")
 	void ChangeBGM(USoundBase* NewBGM, float FadeOutTime = 0.5f, float FadeInTime = 0.5f);
 
 private:
-	// 実際にBGMを鳴らすためのコンポーネント
-	// BGMは基本的に「距離減衰なし」で鳴らしたいので AudioComponent を使うのが便利
+	// =========================
+	// 内部：再生コンポーネント
+	// =========================
+	// BGM 実再生用の AudioComponent。
+	// BGM は距離減衰を持たせないことが多く、位置依存の処理を避けて一元管理しやすい構成です。
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
 	UAudioComponent* BGMComp = nullptr;
 
-	// レベルに置くだけで鳴らしたい場合に設定する「デフォルトBGM」
+	// =========================
+	// 設定：デフォルトBGM
+	// =========================
+	// 「レベルに置いただけで鳴らしたい」場合に指定する起動時BGM。
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|BGM", meta = (AllowPrivateAccess = "true"))
 	USoundBase* DefaultBGM = nullptr;
 
-	// BeginPlay で DefaultBGM を自動再生するか
+	// BeginPlay のタイミングで DefaultBGM を自動再生するかどうか。
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio|BGM", meta = (AllowPrivateAccess = "true"))
 	bool bAutoPlayDefaultBGM = true;
 };

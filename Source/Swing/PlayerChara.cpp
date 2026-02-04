@@ -72,18 +72,33 @@ APlayerChara::APlayerChara()
 		//初期設定部
 	}
 
-	//変更箇所
-	//EngineAudio を生成してアタッチ
-	EngineAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudio"));
-	if (EngineAudio)
+	// =========================
+	// 変更箇所：AudioComponent を C++ で生成（BP登録なし）
+	// =========================
+
+	EngineAudioLow = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudioLow"));
+	if (EngineAudioLow)
 	{
-		EngineAudio->SetupAttachment(RootComponent);
-		EngineAudio->bAutoActivate = false;      //BeginPlayで再生する
-		EngineAudio->bIsUISound = false;         //3D扱い
-		//必要なら Attenuation を BP側で指定する（後述）
+		EngineAudioLow->SetupAttachment(RootComponent);
+		EngineAudioLow->bAutoActivate = false;
+		EngineAudioLow->bIsUISound = false; // 3D扱い
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), m_Rot.Pitch);
+	EngineAudioHigh = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudioHigh"));
+	if (EngineAudioHigh)
+	{
+		EngineAudioHigh->SetupAttachment(RootComponent);
+		EngineAudioHigh->bAutoActivate = false;
+		EngineAudioHigh->bIsUISound = false;
+	}
+
+	RotateAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("RotateAudio"));
+	if (RotateAudio)
+	{
+		RotateAudio->SetupAttachment(RootComponent);
+		RotateAudio->bAutoActivate = false;
+		RotateAudio->bIsUISound = false;
+	}
 }
 
 //入力の関連付け
@@ -128,19 +143,28 @@ void APlayerChara::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// =========================
+	// 重要：音用入力キャッシュ
+	// UpdateMove() で m_ForwardInput を 0 に戻す設計でも、
+	// ここで「そのフレームの入力」を保持しておけば音が破綻しない。
+	// =========================
+	m_ThrustInput01ThisFrame = FMath::Clamp(FMath::Abs(m_ForwardInput), 0.0f, 1.0f);
+
+	// 既存更新
 	UpdateRotation(DeltaTime);
 	UpdateMove(DeltaTime);
 	UpdateCamera(DeltaTime);
 	UpdateSocket();
 
-	//変更箇所
-	//エンジン音更新
+	// 音更新
 	UpdateEngineAudio(DeltaTime);
-
-	// 回転音（追加）
 	UpdateRotateAudio(DeltaTime);
 
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), DeltaTime);
+	// =========================
+	// 重要：回転入力は「そのフレームだけ」を使う
+	// 次フレームで入力が無ければ 0 に戻っていく（スムージングで自然に無音化）
+	// =========================
+	m_RotateInput01 = 0.0f;
 }
 
 //ゲームスタート時
@@ -154,14 +178,21 @@ void APlayerChara::BeginPlay()
 	//常に引っ張られる対象のコーススプラインを取得
 	m_pSpline = GetGameInstance<UMyGameInstance>()->GetCourseSpline();
 
-	//変更箇所
-	if (EngineAudio && EngineLoopSound)
+	// =========================
+	// 変更箇所：ループSEの再生開始（C++のみ）
+	// =========================
+	if (EngineAudioLow && EngineLowLoopSound)
 	{
-		EngineAudio->SetSound(EngineLoopSound);
-		EngineAudio->Play();
+		EngineAudioLow->SetSound(EngineLowLoopSound);
+		EngineAudioLow->Play();
 	}
 
-	// 回転音（追加）
+	if (EngineAudioHigh && EngineHighLoopSound)
+	{
+		EngineAudioHigh->SetSound(EngineHighLoopSound);
+		EngineAudioHigh->Play();
+	}
+
 	if (RotateAudio && RotateLoopSound)
 	{
 		RotateAudio->SetSound(RotateLoopSound);
@@ -658,11 +689,6 @@ void APlayerChara::MoveForward(float _value)
 {
 	if (_value != 0.0f)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("MoveForward: %f"), _value);
-		////上書きではなく加算
-		//m_ForwardInput += _value;
-		////念のため
-		//m_ForwardInput = FMath::Clamp(m_ForwardInput, -1.0f, 1.0f);
 		m_ForwardInput = _value;
 	}
 }
@@ -681,9 +707,6 @@ void APlayerChara::RotPitch(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Pitch = _value;
-
-		//変更箇所
-		// 音用：最大値で保持（複数軸入力があってもOK）
 		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
@@ -692,9 +715,6 @@ void APlayerChara::RotYaw(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Yaw = _value;
-
-		//変更箇所
-		// 音用：最大値で保持（複数軸入力があってもOK）
 		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
@@ -703,9 +723,6 @@ void APlayerChara::RotRoll(float _value)
 	if (_value != 0.0f)
 	{
 		m_Rot.Roll = _value;
-
-		//変更箇所
-		// 音用：最大値で保持（複数軸入力があってもOK）
 		m_RotateInput01 = FMath::Max(m_RotateInput01, FMath::Clamp(FMath::Abs(_value), 0.0f, 1.0f));
 	}
 }
@@ -756,34 +773,52 @@ void APlayerChara::ChangeAutoRot()
 	m_bAutoRot = !m_bAutoRot;
 }
 
-//変更箇所
-//エンジン音再生
+// =========================
+// 変更箇所：2レイヤーエンジン音
+// =========================
 void APlayerChara::UpdateEngineAudio(float DeltaTime)
 {
-	if (!EngineAudio) return;
-
-	// 推力0-1（あなたの設計だと入力がそのフレームだけ入るのでここで読む）
-	float Thrust01 = FMath::Clamp(FMath::Abs(m_ForwardInput), 0.0f, 1.0f);
-
-	// ※もし「入力が無い時もエンジン音を速度で変えたい」なら以下でもOK
-	// float Thrust01 = FMath::Clamp(m_pMovement->Velocity.Length() / m_pMovement->MaxSpeed, 0.f, 1.f);
-
-	EngineThrustSmoothed = FMath::FInterpTo(
-		EngineThrustSmoothed, Thrust01, DeltaTime, EngineInterpSpeed
-	);
-
-	const float Pitch = FMath::Lerp(EnginePitchMin, EnginePitchMax, EngineThrustSmoothed);
-	const float Vol = FMath::Lerp(EngineVolMin, EngineVolMax, EngineThrustSmoothed);
-
-	EngineAudio->SetPitchMultiplier(Pitch);
-	EngineAudio->SetVolumeMultiplier(Vol);
-}
-
-void APlayerChara::UpdateRotateAudio(float DeltaTime)
-{
-	if (!RotateAudio) return;
+	if (!EngineAudioLow && !EngineAudioHigh) return;
 
 	// 入力(0-1)を滑らかに
+	EngineThrustSmoothed = FMath::FInterpTo(
+		EngineThrustSmoothed,
+		m_ThrustInput01ThisFrame,
+		DeltaTime,
+		EngineInterpSpeed
+	);
+
+	// ---- Low Layer：下支え（常に少し鳴らす設計が多い）----
+	if (EngineAudioLow && EngineAudioLow->IsPlaying())
+	{
+		const float PitchLow = FMath::Lerp(EngineLowPitchMin, EngineLowPitchMax, EngineThrustSmoothed);
+		const float VolLow = FMath::Lerp(EngineLowVolMin, EngineLowVolMax, EngineThrustSmoothed);
+
+		EngineAudioLow->SetPitchMultiplier(PitchLow);
+		EngineAudioLow->SetVolumeMultiplier(VolLow);
+	}
+
+	// ---- High Layer：踏み込みで出る（カーブを付けると気持ちいい）----
+	// 直線だと「すぐ耳につく」ことがあるので、Powで立ち上がりを抑える
+	const float HighT = FMath::Pow(EngineThrustSmoothed, 1.5f);
+
+	if (EngineAudioHigh && EngineAudioHigh->IsPlaying())
+	{
+		const float PitchHigh = FMath::Lerp(EngineHighPitchMin, EngineHighPitchMax, HighT);
+		const float VolHigh = FMath::Lerp(EngineHighVolMin, EngineHighVolMax, HighT);
+
+		EngineAudioHigh->SetPitchMultiplier(PitchHigh);
+		EngineAudioHigh->SetVolumeMultiplier(VolHigh);
+	}
+}
+
+// =========================
+// 変更箇所：回転音（ループ再生＋パラメータで無音化）
+// =========================
+void APlayerChara::UpdateRotateAudio(float DeltaTime)
+{
+	if (!RotateAudio || !RotateAudio->IsPlaying()) return;
+
 	RotateInputSmoothed = FMath::FInterpTo(
 		RotateInputSmoothed,
 		m_RotateInput01,
@@ -797,5 +832,5 @@ void APlayerChara::UpdateRotateAudio(float DeltaTime)
 	RotateAudio->SetPitchMultiplier(Pitch);
 	RotateAudio->SetVolumeMultiplier(Vol);
 
-	// RotateVolMin=0 の時は無音になるだけで「再生は維持」されるのでプチノイズが起きにくい
+	// RotateVolMin=0 の場合：無音でも再生維持するのでクリック/プチノイズが起きにくい
 }
