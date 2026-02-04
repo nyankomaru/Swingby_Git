@@ -12,4 +12,6 @@ class SWING_API MyCalcu
 public:
 	MyCalcu();
 	~MyCalcu();
+
+	static float ToValue(float Current,float Target,float Speed,float DeltaTime);
 };
