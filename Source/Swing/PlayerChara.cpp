@@ -629,7 +629,7 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 void APlayerChara::UpdateCameraMove(float DeltaTime)
 {
 	FVector DefaPos(GetActorLocation() + m_DefaAddSpringPos);	//通常の位置
-	FVector LagDire(m_pMesh->GetForwardVector() * -m_CameraLagMaxDistance);		//カメラのずれる方向
+	FVector LagDire(m_pMesh->GetForwardVector() * m_CameraLagMaxDistance);		//カメラのずれる方向
 	FVector CamDire[2](m_pSpring->GetRightVector(), m_pSpring->GetUpVector());	//カメラの右と上方向
 
 	FVector2D XY(0.0f);		//ずれる方向をカメラから見て平面方向のみに（奥方向も行うとFOVと混ざる）
