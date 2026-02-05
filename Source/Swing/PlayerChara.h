@@ -65,7 +65,6 @@ public:
 	FRotator GetUpRotator();
 
 	UPrimitiveComponent* GetSpline() const;
-	void SetSpline(UPrimitiveComponent* _Spline);
 
 	void SubSpeed(float _Rate);
 
@@ -80,6 +79,8 @@ private:
 	void UpdateCameraFOV(float DeltaTime);
 
 	void UpdateSocket();
+
+	void ValueReset();
 
 private:
 	// 入力
@@ -113,56 +114,82 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_pMesh;
 
-	// スプリングアーム
+
+	//=======================
+	//カメラ関係
+	//=======================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* m_pSpring;
-
-	// カメラ
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* m_pCamera;
+	USpringArmComponent* m_pSpring;		// スプリングアーム
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	FRotator m_DefaCameraRot;
+	FVector m_DefaAddSpringPos;			//通常のスプリングアームの位置
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	float m_CameraRotSpeed;
+	UCameraComponent* m_pCamera;		//カメラ
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	float m_CameraReturnRotSpeed;
+	FRotator m_DefaCameraRot;			//通常時のカメラの傾き
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	float m_CameraLagDistanceSpeed;
+	float m_CameraRotSpeed;				//カメラの回転速度
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	float m_CameraLagMaxDistance;
+	float m_CameraReturnRotSpeed;		//カメラが通常の向きの戻る時の速度
 
-	// 移動コンポーネント
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_CameraLagDistanceSpeed;		//カメラとの距離が変化する速度
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_CameraLagMaxDistance;		//カメラとの最大距離
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_DefaFOV;					//通常の視野角
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_MaxAddFOV;					//速度により追加する視野角の最大値
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_SpeedUpFOV;					//入力直後に追加する視野角
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_DefaAddFOVSpeed;			//通常時の視野角の変化速度
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float m_SpeedUpAddFOVSpeed;			//入力直後の視野角の変化速度
+
+	//=======================
+	//移動関係
+	//=======================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Move, meta = (AllowPrivateAccess = "true"))
-	UFloatingPawnMovement* m_pMovement;
+	UFloatingPawnMovement* m_pMovement;	//移動コンポーネント
 
-	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
-	float m_ForwardSpeed;
+	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
+	float m_ForwardSpeed;				//前進速度
 
-	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
-	float m_ReturnCourseSpeed;
+	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
+	float m_ReturnCourseSpeed;			//コースに戻る速度
 
-	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
-	float m_MinReturnCourseSpeed;
+	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
+	float m_MinReturnCourseSpeed;		//コースに戻る最低速度
 
-	UPROPERTY(EditAnywhere, Category = Speed, meta = (AllowPrivateAccess = "true"))
-	float M_CourseOutRate;
+	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
+	float M_CourseOutRate;				//コースアウト時の減速率
+
+
+	//=======================
+	//回転関係
+	//=======================
+	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
+	float m_MaxRotSpeed;				//最高回転速度
 
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
-	float m_MaxRotSpeed;
+	float m_ReachMaxRotSpeed;			//最高回転速度に達する速度
 
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
-	float m_ReachMaxRotSpeed;
+	float m_ReturnRotSpeed;				//進行方向に向きを合わせに行く速度
 
 	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
-	float m_ReturnRotSpeed;
-
-	UPROPERTY(EditAnywhere, Category = Rotation, meta = (AllowPrivateAccess = "true"))
-	FVector m_RotPivot;
+	FVector m_RotPivot;					//回転時の中心
 
 	// スプライン
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))

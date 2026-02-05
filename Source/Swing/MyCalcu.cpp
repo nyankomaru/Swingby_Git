@@ -43,3 +43,10 @@ X MyCalcu::Clamp(X Value, X Min, X Max)
 {
 	return (Value < Min) ? Min : (Value > Max) ? Max : Value;
 }
+
+//³•‰‚Ìæ“¾
+template<class X>
+X MyCalcu::Sign(X Value)
+{
+	return (X)(((Value & 1 << sizeof(X) * 8 - 1) == sizeof(X) * 8 - 1) ? -1.0 : 1.0);
+}

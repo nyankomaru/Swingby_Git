@@ -165,6 +165,9 @@ void APlayerChara::Tick(float DeltaTime)
 	// 次フレームで入力が無ければ 0 に戻っていく（スムージングで自然に無音化）
 	// =========================
 	m_RotateInput01 = 0.0f;
+
+	//各要素のリセット
+	ValueReset();
 }
 
 //ゲームスタート時
@@ -343,9 +346,6 @@ void APlayerChara::UpdateRotation(float DeltaTime)
 	
 	//直前の入力を記録
 	m_PreRotIn = m_Rot;
-	//次の回転の為にリセット
-	m_Rot = FRotator(0.0f, 0.0f, 0.0f);
-
 }
 
 //移動の更新
@@ -375,33 +375,19 @@ void APlayerChara::UpdateMove(float DeltaTime)
 
 		//入力時間の変化
 		m_ForwardInputTime += DeltaTime;
-		//カメラのラグの距離を離す
-		CameraLagDistance += m_CameraLagDistanceSpeed * DeltaTime;
 	}
 	else
 	{
 		m_ForwardInputTime -= DeltaTime;
-		//カメラのラグの距離を近づける
-		CameraLagDistance -= m_CameraLagDistanceSpeed * DeltaTime;
-	}
-
-	if (m_PreForwardInput == m_ForwardInput)
-	{
-
-	}
-	else if (m_ForwardInput == 1.0f)
-	{
-
 	}
 
 	//入力の変化（有効化）があった少し後は画角を広くする
-	if (m_PreForwardInput != m_ForwardInput && m_ForwardInput == 1.0f && m_StrongFOVTimer == 0.0f)
+	if (m_PreForwardInput != m_ForwardInput && m_ForwardInput == 1.0)
 	{
 		m_StrongFOVTimer = 0.1f;
 	}
 	//直前の入力を保存
 	m_PreForwardInput = m_ForwardInput;
-	m_ForwardInput = 0.0f;		//入力準備
 
 	//カメラのラグの距離を変化
 	m_pSpring->CameraLagMaxDistance = FMath::Clamp(CameraLagDistance, 0.1f, m_CameraLagMaxDistance);
@@ -588,6 +574,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 void APlayerChara::UpdateCamera(float DeltaTime)
 {
 	UpdateCameraRot(DeltaTime);
+	UpdateCameraMove(DeltaTime);
 	UpdateCameraFOV(DeltaTime);
 }
 
@@ -641,29 +628,52 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 //カメラの位置更新
 void APlayerChara::UpdateCameraMove(float DeltaTime)
 {
+	FVector DefaPos(GetActorLocation() + m_DefaAddSpringPos);	//通常の位置
+	FVector LagDire(m_pMesh->GetForwardVector() * -m_CameraLagMaxDistance);		//カメラのずれる方向
+	FVector CamDire[2](m_pSpring->GetRightVector(), m_pSpring->GetUpVector());	//カメラの右と上方向
 
+	FVector2D XY(0.0f);		//ずれる方向をカメラから見て平面方向のみに（奥方向も行うとFOVと混ざる）
+	XY.X = (FVector::DotProduct(CamDire[0], LagDire));
+	XY.Y = (FVector::DotProduct(CamDire[1], LagDire));
+	
+	//基準の位置に戻る
+	if (m_ForwardInput == 0.0f)
+	{
+		m_pSpring->SetWorldLocation(FMath::VInterpTo(m_pSpring->GetComponentLocation(),DefaPos,DeltaTime, m_CameraLagDistanceSpeed));
+	}
+	//ずれていく
+	else
+	{
+		m_pSpring->SetWorldLocation(FMath::VInterpTo(m_pSpring->GetComponentLocation(),DefaPos + CamDire[0] * XY.X + CamDire[1] * XY.Y,DeltaTime, m_CameraLagDistanceSpeed));
+	}
+
+	//指定距離より離れそうなときは戻す
+	if ((m_pSpring->GetComponentLocation() - (GetActorLocation() + m_DefaAddSpringPos)).Length() > m_CameraLagMaxDistance)
+	{
+		m_pSpring->SetWorldLocation(DefaPos + CamDire[0] * XY.X + CamDire[1] * XY.Y);
+	}
 }
 
 //カメラの画角の変更
 void APlayerChara::UpdateCameraFOV(float DeltaTime)
 {
-	float NowFOV(m_pCamera->FieldOfView);	//現在の画角
-	float NowAddFOV(NowFOV - 70.0f);		//現在基本値から追加されている画角
-	float AddFOV(0.0f);		//追加したい角度
+	float NowAddFOV(m_pCamera->FieldOfView - m_DefaFOV);	//現在基本値から追加されている画角
+	float Rate((m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)));	//追加する角度の倍率（0～1）
 
+	//入力直後が否かで変化
 	if (m_StrongFOVTimer == 0.0f)
 	{
-		AddFOV = MyCalcu::ToValueF(NowAddFOV, (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 40.0f, 1.0f, DeltaTime);
+		NowAddFOV = MyCalcu::ToValueF(NowAddFOV, Rate * m_MaxAddFOV, m_DefaAddFOVSpeed, DeltaTime);
 	}
 	else
 	{
-		AddFOV = MyCalcu::ToValueF(NowAddFOV, (m_pMovement->Velocity.Length() / (m_pMovement->MaxSpeed)) * 100.0f, 20.0f, DeltaTime);
+		NowAddFOV = MyCalcu::ToValueF(NowAddFOV, Rate * m_MaxAddFOV + m_SpeedUpFOV, m_SpeedUpAddFOVSpeed, DeltaTime);
 		m_StrongFOVTimer = MyCalcu::ToValueF(m_StrongFOVTimer, 0.0f, 1.0f, DeltaTime);
 	}
 
-	m_pCamera->FieldOfView = 70.0f + MyCalcu::Clamp(AddFOV, 0.0f, 90.0f);
+	m_pCamera->FieldOfView = m_DefaFOV + MyCalcu::Clamp(NowAddFOV, 0.0f, m_MaxAddFOV + m_SpeedUpFOV);
 
-	UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
+	//UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
 }
 
 //ソケットの更新
@@ -682,6 +692,13 @@ void APlayerChara::UpdateSocket()
 			m_pSocket[i]->SetActorRotation(GetActorRotation());
 		}
 	}
+}
+
+//各値のリセット
+void APlayerChara::ValueReset()
+{
+	m_ForwardInput = 0.0f;	//前進入力
+	m_Rot = FRotator(0.0f, 0.0f, 0.0f);	//回転入力
 }
 
 //移動
