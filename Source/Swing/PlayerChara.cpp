@@ -634,7 +634,7 @@ void APlayerChara::UpdateCameraMove(float DeltaTime)
 
 	FVector2D XY(0.0f);		//ずれる方向をカメラから見て平面方向のみに（奥方向も行うとFOVと混ざる）
 	XY.X = (FVector::DotProduct(CamDire[0], LagDire));
-	XY.Y = (FVector::DotProduct(CamDire[1], LagDire));
+	XY.Y = (FVector::DotProduct(CamDire[1], LagDire * 0.618f));	//0.618は1.618を1とした時の1:1.618の1の倍率
 	
 	//基準の位置に戻る
 	if (m_ForwardInput == 0.0f)
@@ -647,11 +647,19 @@ void APlayerChara::UpdateCameraMove(float DeltaTime)
 		m_pSpring->SetWorldLocation(FMath::VInterpTo(m_pSpring->GetComponentLocation(),DefaPos + CamDire[0] * XY.X + CamDire[1] * XY.Y,DeltaTime, m_CameraLagDistanceSpeed));
 	}
 
+	FVector NowDisVec((m_pSpring->GetComponentLocation() - (GetActorLocation() + m_DefaAddSpringPos)));
+	FVector2D NowXYDis(fabs(FVector::DotProduct(CamDire[0], NowDisVec)), fabs(FVector::DotProduct(CamDire[1], NowDisVec)));		//移動後の基準位置からの各方向の距離
+
+	if (NowXYDis[0] > m_CameraLagMaxDistance || NowXYDis[1] > m_CameraLagMaxDistance * 0.618f)
+	{
+		m_pSpring->SetWorldLocation(DefaPos + CamDire[0] * ((NowXYDis[0] > m_CameraLagMaxDistance) ? XY.X : NowXYDis[0]) + CamDire[1] * ((NowXYDis[1] > m_CameraLagMaxDistance * 0.618f) ? XY.Y : NowXYDis[1]));
+	}
+
 	//指定距離より離れそうなときは戻す
-	if ((m_pSpring->GetComponentLocation() - (GetActorLocation() + m_DefaAddSpringPos)).Length() > m_CameraLagMaxDistance)
+	/*if ((m_pSpring->GetComponentLocation() - (GetActorLocation() + m_DefaAddSpringPos)).Length() > m_CameraLagMaxDistance)
 	{
 		m_pSpring->SetWorldLocation(DefaPos + CamDire[0] * XY.X + CamDire[1] * XY.Y);
-	}
+	}*/
 }
 
 //カメラの画角の変更
