@@ -18,6 +18,5 @@ public:
 	template<class X>
 	static X Clamp(X Value, X Min, X Max);
 
-	template<class X>
-	static X Sign(X Value);
+	static float Sign(float Value);
 };
