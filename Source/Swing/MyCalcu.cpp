@@ -34,6 +34,7 @@ float MyCalcu::ToValueF(float Current, float Target, float Speed, float DeltaTim
 	}
 
 	//速度分目的値に近づく(*が1を超えると目的値を超えてしまう)
+	//return Current + Sign(Def) * Clamp(Speed * DeltaTime, 0.0f, fabs(Def));
 	return Current + Def * Clamp(Speed * DeltaTime, 0.0f, 1.0f);
 }
 
@@ -44,9 +45,8 @@ X MyCalcu::Clamp(X Value, X Min, X Max)
 	return (Value < Min) ? Min : (Value > Max) ? Max : Value;
 }
 
-//正負の取得
-template<class X>
-X MyCalcu::Sign(X Value)
+//正負の取得(float)
+float MyCalcu::Sign(float Value)
 {
-	return (X)(((Value & 1 << sizeof(X) * 8 - 1) == sizeof(X) * 8 - 1) ? -1.0 : 1.0);
+	return ((((int)Value & (1 << (sizeof(int) * 8 - 1))) == (1 << (sizeof(int) * 8 - 1))) ? -1.0f : 1.0f);
 }

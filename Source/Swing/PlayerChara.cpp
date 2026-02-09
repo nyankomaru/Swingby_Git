@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerChara.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
@@ -382,7 +381,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	}
 
 	//入力の変化（有効化）があった少し後は画角を広くする
-	if (m_PreForwardInput != m_ForwardInput && m_ForwardInput == 1.0)
+	if (m_PreForwardInput != m_ForwardInput && m_PreForwardInput == 0.0 && m_StrongFOVTimer == 0.0f)
 	{
 		m_StrongFOVTimer = 0.1f;
 	}
@@ -681,7 +680,7 @@ void APlayerChara::UpdateCameraFOV(float DeltaTime)
 
 	m_pCamera->FieldOfView = m_DefaFOV + MyCalcu::Clamp(NowAddFOV, 0.0f, m_MaxAddFOV + m_SpeedUpFOV);
 
-	//UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
+	UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
 }
 
 //ソケットの更新
