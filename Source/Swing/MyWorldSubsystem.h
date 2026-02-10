@@ -11,7 +11,7 @@ class AMyCamera;
 class UUserWidget;
 
 UCLASS()
-class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject ,public APlayerController
+class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject /*,public APlayerController*/
 {
 	GENERATED_BODY()
 	
