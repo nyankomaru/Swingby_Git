@@ -2,7 +2,8 @@
 
 
 #include "MyWorldSubsystem.h"
-#include "ThirdPersonCamera.h"
+#include "MyCamera.h"
+#include "UnrealWidget.h"
 
 UMyWorldSubsystem::UMyWorldSubsystem()
 	: m_WorldTimer(0.0f)
@@ -55,11 +56,23 @@ float UMyWorldSubsystem::GetOperateTimer()const
 }
 
 //カメラの設定・取得
-void UMyWorldSubsystem::AddThirdCamera(AThirdPersonCamera* _Camera)
+void UMyWorldSubsystem::AddCamera(AMyCamera* _Camera)
 {
-	m_pThirdCamera.Push(_Camera);
+	m_pCamera.Push(_Camera);
 }
-TArray<AThirdPersonCamera*> UMyWorldSubsystem::GetThirdCamera() const
+TArray<AMyCamera*> UMyWorldSubsystem::GetCamera() const
 {
-	return m_pThirdCamera;
+	return m_pCamera;
+}
+
+//ウィジェットの設定
+UFUNCTION(BlueprintCallable)
+void UMyWorldSubsystem::AddWidget(UUserWidget* _Widget)
+{
+	m_pWidget.Push(_Widget);
+}
+UFUNCTION(BlueprintCallable)
+TArray<UUserWidget*> UMyWorldSubsystem::GetWidgeta() const
+{
+	return m_pWidget;
 }

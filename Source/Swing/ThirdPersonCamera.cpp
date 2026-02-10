@@ -14,14 +14,16 @@ AThirdPersonCamera::AThirdPersonCamera()
 void AThirdPersonCamera::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetWorld()->GetSubsystem<UMyWorldSubsystem>();
 }
 
 void AThirdPersonCamera::Tick(float DeltaTime)
 {
 	//プレイヤーの持つソケットに追加
-	if (!m_bRegist)
+	/*if (!m_bRegist)
 	{
 		GetGameInstance<UMyGameInstance>()->GetPlayer()->AddSocket(this, m_SocketPos);
 		m_bRegist = true;
-	}
+	}*/
 }

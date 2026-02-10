@@ -7,10 +7,11 @@
 #include "Tickable.h"
 #include "MyWorldSubsystem.generated.h"
 
-class AThirdPersonCamera;
+class AMyCamera;
+class UUserWidget;
 
 UCLASS()
-class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject
+class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject ,public APlayerController
 {
 	GENERATED_BODY()
 	
@@ -35,12 +36,19 @@ public:
 
 	//カメラの設定・取得
 	UFUNCTION(BlueprintCallable)
-	void AddThirdCamera(AThirdPersonCamera* _Camera);
+	void AddCamera(AMyCamera* _Camera);
 	UFUNCTION(BlueprintCallable)
-	TArray<AThirdPersonCamera*> GetThirdCamera() const;
+	TArray<AMyCamera*> GetCamera() const;
+
+	//ウィジェットの設定
+	UFUNCTION(BlueprintCallable)
+	void AddWidget(UUserWidget* _Widget);
+	UFUNCTION(BlueprintCallable)
+	TArray<UUserWidget*> GetWidgeta() const;
 
 private:
-	TArray<AThirdPersonCamera*> m_pThirdCamera;	//配置されたカメラ
+	TArray<AMyCamera*> m_pCamera;	//配置されたカメラ
+	TArray<UUserWidget*> m_pWidget;	//ウィジェット
 	float m_WorldTimer;	//ワールド開始時点からのタイマー
 	float m_OperateTimer;	//ストップウォッチの様なタイマー
 
