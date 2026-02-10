@@ -656,9 +656,9 @@ void APlayerChara::UpdateCameraMove(float DeltaTime)
 		m_pSpring->SetWorldLocation(FMath::VInterpTo(m_pSpring->GetComponentLocation(),DefaPos + CamDire[0] * XY.X + CamDire[1] * XY.Y,DeltaTime, m_CameraLagDistanceSpeed));
 	}
 
+	//各方向の最大距離
 	FVector NowDisVec((m_pSpring->GetComponentLocation() - (GetActorLocation() + m_DefaAddSpringPos)));
 	FVector2D NowXYDis(fabs(FVector::DotProduct(CamDire[0], NowDisVec)), fabs(FVector::DotProduct(CamDire[1], NowDisVec)));		//移動後の基準位置からの各方向の距離
-
 	if (NowXYDis[0] > m_CameraLagMaxDistance || NowXYDis[1] > m_CameraLagMaxDistance * 0.618f)
 	{
 		m_pSpring->SetWorldLocation(DefaPos + CamDire[0] * ((NowXYDis[0] > m_CameraLagMaxDistance) ? XY.X : NowXYDis[0]) + CamDire[1] * ((NowXYDis[1] > m_CameraLagMaxDistance * 0.618f) ? XY.Y : NowXYDis[1]));
@@ -690,7 +690,7 @@ void APlayerChara::UpdateCameraFOV(float DeltaTime)
 
 	m_pCamera->FieldOfView = m_DefaFOV + MyCalcu::Clamp(NowAddFOV, 0.0f, m_MaxAddFOV + m_SpeedUpFOV);
 
-	UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
+	//UE_LOG(LogTemp, Warning, TEXT("%ff"), m_StrongFOVTimer);
 }
 
 //ソケットの更新

@@ -2,6 +2,7 @@
 
 
 #include "MyWorldSubsystem.h"
+#include "ThirdPersonCamera.h"
 
 UMyWorldSubsystem::UMyWorldSubsystem()
 	: m_WorldTimer(0.0f)
@@ -51,4 +52,14 @@ float UMyWorldSubsystem::GetWorldTimer()const
 float UMyWorldSubsystem::GetOperateTimer()const
 {
 	return m_OperateTimer;
+}
+
+//ƒJƒƒ‰‚Ìİ’èEæ“¾
+void UMyWorldSubsystem::AddThirdCamera(AThirdPersonCamera* _Camera)
+{
+	m_pThirdCamera.Push(_Camera);
+}
+TArray<AThirdPersonCamera*> UMyWorldSubsystem::GetThirdCamera() const
+{
+	return m_pThirdCamera;
 }

@@ -7,9 +7,8 @@
 #include "Tickable.h"
 #include "MyWorldSubsystem.generated.h"
 
-/**
- * 
- */
+class AThirdPersonCamera;
+
 UCLASS()
 class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject
 {
@@ -18,11 +17,11 @@ class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGam
 public:
 	UMyWorldSubsystem();
 
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	void Deinitialize() override;
 
-	virtual void Tick(float DeltaTime) override;
-	virtual TStatId GetStatId() const override;
+	void Tick(float DeltaTime) override;
+	TStatId GetStatId() const override;
 
 	//タイマー計測状態の切替
 	UFUNCTION(BlueprintCallable)
@@ -34,7 +33,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetOperateTimer()const;
 
+	//カメラの設定・取得
+	UFUNCTION(BlueprintCallable)
+	void AddThirdCamera(AThirdPersonCamera* _Camera);
+	UFUNCTION(BlueprintCallable)
+	TArray<AThirdPersonCamera*> GetThirdCamera() const;
+
 private:
+	TArray<AThirdPersonCamera*> m_pThirdCamera;	//配置されたカメラ
 	float m_WorldTimer;	//ワールド開始時点からのタイマー
 	float m_OperateTimer;	//ストップウォッチの様なタイマー
 

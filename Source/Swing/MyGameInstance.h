@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Tickable.h"
 #include "MyGameInstance.generated.h"
 
 //前方宣言
 class APlayerChara;
 class USplineComponent;
+class AThirdPersonCamera;
 
 /**
  * 
  */
 UCLASS()
-class SWING_API UMyGameInstance : public UGameInstance
+class SWING_API UMyGameInstance : public UGameInstance , public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -28,6 +30,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCourseSpline(USplineComponent* _Spline);
 	USplineComponent* GetCourseSpline() const;
+
+	void Tick(float DeltaTime) override;
+	TStatId GetStatId() const override;
 	
 public:
 	APlayerChara* m_pPlayer;	//プレイヤー

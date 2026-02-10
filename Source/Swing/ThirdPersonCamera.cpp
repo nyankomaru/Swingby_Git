@@ -3,6 +3,7 @@
 #include "ThirdPersonCamera.h"
 #include "MyGameInstance.h"
 #include "PlayerChara.h"
+#include "MyWorldSubsystem.h"
 
 AThirdPersonCamera::AThirdPersonCamera()
 	:m_bRegist(false)
