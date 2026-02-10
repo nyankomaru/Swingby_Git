@@ -68,6 +68,16 @@ public:
 
 	void SubSpeed(float _Rate);
 
+	// --- 進捗UI用（Blueprintから取得） ---
+	UFUNCTION(BlueprintPure, Category = "Course|UI")
+	float GetCourseProgress01() const;
+
+	UFUNCTION(BlueprintPure, Category = "Course|UI")
+	float GetCourseRemainingDistance() const;
+
+	UFUNCTION(BlueprintPure, Category = "Course|UI")
+	bool IsReverseOnCourse() const;
+
 private:
 	// 更新
 	void UpdateRotation(float DeltaTime);
@@ -81,6 +91,8 @@ private:
 	void UpdateSocket();
 
 	void ValueReset();
+
+	void UpdateCourseProgress(float DeltaTime);
 
 private:
 	// 入力
@@ -197,6 +209,22 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Course, meta = (AllowPrivateAccess = "true"))
 	float m_ReturnCourseLen;
+
+	//=======================
+	// 進捗UI（Course Progress） ★ここを追加
+	//=======================
+	float m_SplineLen = 0.0f;        // 全長
+	float m_CourseS = 0.0f;          // 現在s（0..Len）
+	float m_CourseSPrev = 0.0f;      // 前フレームs（飛び対策）
+	float m_CourseSBest = 0.0f;      // 最大到達s（ゲージ戻さない）
+	float m_CourseSDisplay = 0.0f;   // 表示用（平滑化）
+	bool  m_bReverse = false;        // 逆走フラグ
+
+	UPROPERTY(EditAnywhere, Category = "Course|UI", meta = (AllowPrivateAccess = "true"))
+	float m_CourseJumpLimit = 8000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Course|UI", meta = (AllowPrivateAccess = "true"))
+	float m_CourseUIInterp = 8.0f;
 
 	// =========================
 	// 変更箇所：Audio 実体（C++のみで生成）

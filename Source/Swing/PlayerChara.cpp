@@ -155,6 +155,9 @@ void APlayerChara::Tick(float DeltaTime)
 	UpdateCamera(DeltaTime);
 	UpdateSocket();
 
+	// ★進捗更新（移動後の位置で計算）
+    UpdateCourseProgress(DeltaTime);
+
 	// 音更新
 	UpdateEngineAudio(DeltaTime);
 	UpdateRotateAudio(DeltaTime);
@@ -179,6 +182,13 @@ void APlayerChara::BeginPlay()
 	GetGameInstance<UMyGameInstance>()->SetPlayer(this);
 	//常に引っ張られる対象のコーススプラインを取得
 	m_pSpline = GetGameInstance<UMyGameInstance>()->GetCourseSpline();
+
+	if (m_pSpline)
+	{
+		m_SplineLen = m_pSpline->GetSplineLength();
+		m_CourseS = m_CourseSPrev = m_CourseSBest = m_CourseSDisplay = 0.0f;
+		m_bReverse = false;
+	}
 
 	// =========================
 	// 変更箇所：ループSEの再生開始（C++のみ）
@@ -857,4 +867,60 @@ void APlayerChara::UpdateRotateAudio(float DeltaTime)
 	RotateAudio->SetVolumeMultiplier(Vol);
 
 	// RotateVolMin=0 の場合：無音でも再生維持するのでクリック/プチノイズが起きにくい
+}
+
+void APlayerChara::UpdateCourseProgress(float DeltaTime)
+{
+	if (!m_pSpline || m_SplineLen <= 0.0f) return;
+
+	const FVector Loc = GetActorLocation();
+
+	// 最近点のキー→距離（0..Len）
+	const float Key = m_pSpline->FindInputKeyClosestToWorldLocation(Loc);
+	float S = m_pSpline->GetDistanceAlongSplineAtSplineInputKey(Key);
+	S = FMath::Clamp(S, 0.0f, m_SplineLen);
+
+	// ---- 3Dコースで別区間に吸われてSが飛ぶのを抑制 ----
+	// いきなり大きく飛んだら補間（または無視）する
+	if (FMath::Abs(S - m_CourseSPrev) > m_CourseJumpLimit)
+	{
+		// まずは穏当な補間。飛びが酷いなら「前値固定」に変えるのもアリ
+		S = FMath::FInterpTo(m_CourseSPrev, S, DeltaTime, m_CourseUIInterp);
+	}
+
+	m_CourseSPrev = S;
+	m_CourseS = S;
+
+	// ---- 逆走判定（警告用）----
+	const FVector TangentDir =
+		m_pSpline->GetDirectionAtDistanceAlongSpline(m_CourseS, ESplineCoordinateSpace::World);
+
+	const FVector Vel = (m_pMovement ? m_pMovement->Velocity : FVector::ZeroVector);
+	const float Dot = FVector::DotProduct(Vel.GetSafeNormal(), TangentDir);
+	m_bReverse = (Dot < -0.2f);
+
+	// ---- UI表示距離：戻らないゲージにしたいなら最大到達を使う ----
+	// 逆走でもマイナス方向に進行しない（あなたの課題に直撃）
+	m_CourseSBest = FMath::Max(m_CourseSBest, m_CourseS);
+
+	// 表示はスムージング
+	m_CourseSDisplay = FMath::FInterpTo(m_CourseSDisplay, m_CourseSBest, DeltaTime, m_CourseUIInterp);
+	m_CourseSDisplay = FMath::Clamp(m_CourseSDisplay, 0.0f, m_SplineLen);
+}
+
+float APlayerChara::GetCourseProgress01() const
+{
+	if (m_SplineLen <= 0.0f) return 0.0f;
+	return m_CourseSDisplay / m_SplineLen;  // 0..1
+}
+
+float APlayerChara::GetCourseRemainingDistance() const
+{
+	if (m_SplineLen <= 0.0f) return 0.0f;
+	return FMath::Max(0.0f, m_SplineLen - m_CourseSDisplay);
+}
+
+bool APlayerChara::IsReverseOnCourse() const
+{
+	return m_bReverse;
 }
