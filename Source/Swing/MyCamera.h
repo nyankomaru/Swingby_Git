@@ -10,7 +10,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 
-UCLASS()
+UCLASS(Blueprintable)
 class SWING_API AMyCamera : public AActor
 {
 	GENERATED_BODY()
@@ -29,10 +29,10 @@ public:
 
 private:
 	//スプリングアーム
-	UPROPERTY(EditAnywhere,Category = Arm,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Arm, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* m_pSpringArm;
 
 	//カメラ本体
-	UPROPERTY(EditAnywhere,Category = Camera,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* m_pCamera;
 };

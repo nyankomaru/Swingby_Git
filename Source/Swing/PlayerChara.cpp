@@ -12,6 +12,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SplineComponent.h"
 #include "MyCalcu.h"
+#include "MyCamera.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -64,6 +65,7 @@ APlayerChara::APlayerChara()
 		//アームにくっつける
 		m_pCamera->SetupAttachment(m_pSpring);
 	}
+
 	//移動コンポーネントの生成
 	m_pMovement = CreateDefaultSubobject<UFloatingPawnMovement>("m_pMovement");
 	if (m_pMovement)
@@ -242,6 +244,16 @@ void APlayerChara::RemoveSocket(AActor* _p)
 	if (_p)
 	{
 		//m_pSocket.Get
+	}
+}
+
+//カメラを無理矢理変更
+void APlayerChara::ChangeCamera(USpringArmComponent* _pSpring, UCameraComponent* _pCamera)
+{
+	if (_pSpring && _pCamera)
+	{
+		m_pSpring = _pSpring;
+		m_pCamera = _pCamera;
 	}
 }
 

@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "MyGameInstance.h"
 #include "PlayerChara.h"
+#include "MyWorldSubsystem.h"
 
 // Sets default values
 AMyCamera::AMyCamera()
@@ -35,6 +36,9 @@ AMyCamera::AMyCamera()
 void AMyCamera::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//SubSystem‚É“o˜^
+	GetWorld()->GetSubsystem<UMyWorldSubsystem>()->AddCamera(this);
 }
 
 // Called every frame

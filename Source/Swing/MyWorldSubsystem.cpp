@@ -4,6 +4,7 @@
 #include "MyWorldSubsystem.h"
 #include "MyCamera.h"
 #include "UnrealWidget.h"
+#include "MyCalcu.h"
 
 UMyWorldSubsystem::UMyWorldSubsystem()
 	: m_WorldTimer(0.0f)
@@ -16,6 +17,11 @@ UMyWorldSubsystem::UMyWorldSubsystem()
 void UMyWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	m_WorldTimer = 0.0f;
+	m_OperateTimer = 0.0f;
+	m_NowCamID = 0;
+	m_bTimerStart = false;
 }
 void UMyWorldSubsystem::Deinitialize()
 {
@@ -64,15 +70,12 @@ TArray<AMyCamera*> UMyWorldSubsystem::GetCamera() const
 {
 	return m_pCamera;
 }
-
-//ウィジェットの設定
-UFUNCTION(BlueprintCallable)
-void UMyWorldSubsystem::AddWidget(UUserWidget* _Widget)
+//カメラの変更
+void UMyWorldSubsystem::ChangeCamera(bool _Add)
 {
-	m_pWidget.Push(_Widget);
-}
-UFUNCTION(BlueprintCallable)
-TArray<UUserWidget*> UMyWorldSubsystem::GetWidgeta() const
-{
-	return m_pWidget;
+	if (m_pCamera.Num() != 0)
+	{
+		m_NowCamID = MyCalcu::Clamp(m_NowCamID + ((_Add) ? 1 : -1), 0, m_pCamera.Num() - 1);
+		GetWorld()->GetFirstPlayerController()->SetViewTargetWithBlend(m_pCamera[m_NowCamID],5.0f);
+	}
 }

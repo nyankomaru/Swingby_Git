@@ -18,6 +18,7 @@ class UCameraComponent;
 class APlanet;
 class UFloatingPawnMovement;
 class USplineComponent;
+class AMyCamera;
 
 UCLASS()
 class SWING_API APlayerChara : public AMyPawn
@@ -49,6 +50,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveSocket(AActor* _p);
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeCamera(USpringArmComponent* _pSpring, UCameraComponent* _pCamera);
 
 	UFUNCTION(BlueprintCallable)
 	int GetGraNum();
@@ -168,6 +172,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float m_SpeedUpAddFOVSpeed;			//“ü—Í’¼Œã‚ÌŽ‹–ìŠp‚Ì•Ï‰»‘¬“x
+
+	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	AMyCamera* m_pMyCamera;			//“ü—Í’¼Œã‚ÌŽ‹–ìŠp‚Ì•Ï‰»‘¬“x
 
 	//=======================
 	//ˆÚ“®ŠÖŒW

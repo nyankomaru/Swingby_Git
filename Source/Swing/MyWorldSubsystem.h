@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Tickable.h"
+#include "EnhancedInputSubsystems.h"
 #include "MyWorldSubsystem.generated.h"
 
 class AMyCamera;
 class UUserWidget;
 
 UCLASS()
-class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject /*,public APlayerController*/
+class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject
 {
 	GENERATED_BODY()
 	
@@ -39,18 +40,14 @@ public:
 	void AddCamera(AMyCamera* _Camera);
 	UFUNCTION(BlueprintCallable)
 	TArray<AMyCamera*> GetCamera() const;
-
-	//ウィジェットの設定
+	//カメラの変更
 	UFUNCTION(BlueprintCallable)
-	void AddWidget(UUserWidget* _Widget);
-	UFUNCTION(BlueprintCallable)
-	TArray<UUserWidget*> GetWidgeta() const;
+	void ChangeCamera(bool _Add);
 
 private:
 	TArray<AMyCamera*> m_pCamera;	//配置されたカメラ
-	TArray<UUserWidget*> m_pWidget;	//ウィジェット
 	float m_WorldTimer;	//ワールド開始時点からのタイマー
 	float m_OperateTimer;	//ストップウォッチの様なタイマー
-
+	int m_NowCamID;	//現在のカメラ
 	bool m_bTimerStart;		//タイマー計測が開始されているか否か
 };
