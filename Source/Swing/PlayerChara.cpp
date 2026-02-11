@@ -13,6 +13,7 @@
 #include "Components/SplineComponent.h"
 #include "MyCalcu.h"
 #include "MyCamera.h"
+#include "MyWorldSubsystem.h"
 
 //コンストラクタ
 APlayerChara::APlayerChara()
@@ -51,6 +52,7 @@ APlayerChara::APlayerChara()
 		//重力の影響は受けない
 		m_pMesh->SetEnableGravity(false);
 	}
+
 	//スプリングアームの生成
 	m_pSpring = CreateDefaultSubobject<USpringArmComponent>("m_pSpring");
 	if (m_pSpring)
@@ -288,6 +290,13 @@ float APlayerChara::GetForwardInputTime() const
 	return m_ForwardInputTime;
 }
 
+//状態の強制変更（スタート時に使う）
+void APlayerChara::SetStart(FVector _Loc, FRotator _Rot, float _Speed)
+{
+	SetActorRotation(_Rot);
+	SetActorLocation(_Loc);
+	m_pMovement->Velocity = m_pMesh->GetForwardVector() * _Speed;
+}
 //減速
 void APlayerChara::SubSpeed(float _Rate)
 {

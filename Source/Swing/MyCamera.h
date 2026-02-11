@@ -27,6 +27,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//取得
+	USpringArmComponent* GetSpringArm() const;
+	UCameraComponent* GetCamera() const;
+
 private:
 	//スプリングアーム
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Arm, meta = (AllowPrivateAccess = "true"))

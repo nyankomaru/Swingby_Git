@@ -70,6 +70,9 @@ public:
 
 	UPrimitiveComponent* GetSpline() const;
 
+	//状態の強制変更（スタート時に使う）
+	UFUNCTION(BlueprintCallable)
+	void SetStart(FVector _Loc,FRotator _Rot,float _Speed);
 	void SubSpeed(float _Rate);
 
 	// --- 進捗UI用（Blueprintから取得） ---
@@ -172,9 +175,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float m_SpeedUpAddFOVSpeed;			//入力直後の視野角の変化速度
-
-	UPROPERTY(EditAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	AMyCamera* m_pMyCamera;			//入力直後の視野角の変化速度
 
 	//=======================
 	//移動関係

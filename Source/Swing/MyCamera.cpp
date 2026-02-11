@@ -48,3 +48,12 @@ void AMyCamera::Tick(float DeltaTime)
 
 }
 
+//Žæ“¾
+USpringArmComponent* AMyCamera::GetSpringArm() const
+{
+	return m_pSpringArm;
+}
+UCameraComponent* AMyCamera::GetCamera() const
+{
+	return m_pCamera;
+}
