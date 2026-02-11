@@ -28,10 +28,14 @@ APlanet::APlanet()
 
 void APlanet::BeginPlay()
 {
-	if (m_pGravitySphere)
-	{
-		//m_pGravitySphere->SetWorldScale3D(FVector(m_Gravity * 200.0f));
-	}
+	Super::BeginPlay();
+}
+
+void APlanet::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	AddActorWorldRotation(m_RotDire.GetNormalized() * m_RotSpeed * DeltaTime);
 }
 
 //d—Í‚Ìæ“¾

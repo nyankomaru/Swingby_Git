@@ -75,6 +75,16 @@ void UMyWorldSubsystem::ChangeCamera(bool _Add)
 	if (m_pCamera.Num() != 0)
 	{
 		m_NowCamID = MyCalcu::Clamp(m_NowCamID + ((_Add) ? 1 : -1), 0, m_pCamera.Num() - 1);
-		GetWorld()->GetFirstPlayerController()->SetViewTargetWithBlend(m_pCamera[m_NowCamID],5.0f);
+		GetWorld()->GetFirstPlayerController()->SetViewTargetWithBlend(m_pCamera[m_NowCamID],1.0f);
 	}
+}
+
+//‰ŠúˆÊ’u‚Ìİ’èEæ“¾
+void UMyWorldSubsystem::SetPlayerInit(FTransform _Form)
+{
+	m_PlayerRL = _Form;
+}
+FTransform UMyWorldSubsystem::GetPlayerInit() const
+{
+	return m_PlayerRL;
 }

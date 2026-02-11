@@ -22,6 +22,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	void Tick(float DeltaTime) override;
 
 public:
 	//重力の取得
@@ -34,13 +35,15 @@ public:
 	FName GetName() const;
 	
 protected:
-	//重力の範囲
 	UPROPERTY(EditAnywhere,Category = Gravity,meta = (AllowPrivateAccess = "true"))
-	USphereComponent* m_pGravitySphere;
-
-	//重力
+	USphereComponent* m_pGravitySphere;		//重力の範囲
 	UPROPERTY(EditAnywhere, Category = Gravity, meta = (AllowPrivateAccess = "true"))
-	float m_Gravity;
+	float m_Gravity;		//重力
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Rotation, meta = (AllowPrivateAccess = "true"))
+	FRotator m_RotDire;	//回転方向
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Rotation, meta = (AllowPrivateAccess = "true"))
+	float m_RotSpeed;		//回転速度
 
 	//星の名前
 	UPROPERTY(EditAnywhere,Category = Name,meta = (AllowPrivateAccess = "true"))

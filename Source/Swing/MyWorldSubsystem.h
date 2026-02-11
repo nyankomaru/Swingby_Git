@@ -9,7 +9,6 @@
 #include "MyWorldSubsystem.generated.h"
 
 class AMyCamera;
-class UUserWidget;
 
 UCLASS()
 class SWING_API UMyWorldSubsystem : public UWorldSubsystem , public FTickableGameObject
@@ -44,8 +43,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeCamera(bool _Add);
 
+	//初期位置の設定・取得
+	UFUNCTION(BlueprintCallable)
+	void SetPlayerInit(FTransform _Form);
+	UFUNCTION(BlueprintCallable)
+	FTransform GetPlayerInit() const;
+
 private:
 	TArray<AMyCamera*> m_pCamera;	//配置されたカメラ
+	FTransform m_PlayerRL;	//初期位置
 	float m_WorldTimer;	//ワールド開始時点からのタイマー
 	float m_OperateTimer;	//ストップウォッチの様なタイマー
 	int m_NowCamID;	//現在のカメラ
