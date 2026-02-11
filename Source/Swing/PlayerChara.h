@@ -59,6 +59,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	float GetSpeed();
+	UFUNCTION(BlueprintCallable)
+	float GetMaxSpeed();
 
 	UFUNCTION(BlueprintPure, Category = "Input")
 	float GetForwardInput() const;
@@ -193,6 +195,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Move, meta = (AllowPrivateAccess = "true"))
 	float M_CourseOutRate;				//コースアウト時の減速率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	float m_ForwardInput;
 
 
 	//=======================
@@ -341,7 +346,6 @@ private:
 	FRotator m_CameraRot;
 	FRotator m_CameraRotInput;
 
-	float m_ForwardInput;
 	float m_PreForwardInput;
 	float m_Speed;
 	float m_ForwardInputTime;

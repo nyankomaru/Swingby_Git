@@ -277,6 +277,10 @@ float APlayerChara::GetSpeed()
 	//return m_Speed;
 	return m_pMovement->Velocity.Length();
 }
+float APlayerChara::GetMaxSpeed()
+{
+	return m_pMovement->MaxSpeed;
+}
 
 //入力の取得
 float APlayerChara::GetForwardInput() const
@@ -578,7 +582,7 @@ void APlayerChara::UpdateMove(float DeltaTime)
 	//最終的移動変更
 	//m_pMovement->Velocity = m_Velocity + AddReturn;
 	//m_pMovement->Velocity += AddMoveDire * DeltaTime + AddReturn;
-	m_pMovement->Acceleration = (AddMoveDire * DeltaTime + AddReturn * DeltaTime).Length();
+	m_pMovement->Acceleration = (AddMoveDire + AddReturn).Length();
 	AddMovementInput((AddMoveDire + AddReturn).GetSafeNormal());
 
 	//移動後の位置
