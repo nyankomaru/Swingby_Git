@@ -19,3 +19,12 @@ TStatId UMyGameInstanceSubsystem::GetStatId() const
 {
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UMyTickableWorldSubsystem, STATGROUP_Tickables);
 }
+
+void UMyGameInstanceSubsystem::SetGoalTime(float _Time)
+{
+	m_GoalTime = _Time;
+}
+float UMyGameInstanceSubsystem::GetGoalTime() const
+{
+	return m_GoalTime;
+}

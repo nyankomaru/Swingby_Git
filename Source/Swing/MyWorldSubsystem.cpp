@@ -60,6 +60,11 @@ float UMyWorldSubsystem::GetOperateTimer()const
 	return m_OperateTimer;
 }
 
+void UMyWorldSubsystem::SaveOperateTimer()
+{
+	SwitchTimer();
+}
+
 //ƒJƒƒ‰‚Ìİ’èEæ“¾
 void UMyWorldSubsystem::AddCamera(AMyCamera* _Camera)
 {

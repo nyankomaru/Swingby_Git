@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetOperateTimer()const;
 
+	UFUNCTION(BlueprintCallable)
+	void SaveOperateTimer();
+
 	//ƒJƒƒ‰‚Ìİ’èEæ“¾
 	UFUNCTION(BlueprintCallable)
 	void AddCamera(AMyCamera* _Camera);

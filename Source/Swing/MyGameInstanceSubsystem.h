@@ -22,4 +22,11 @@ public:
 
 	void Tick(float DeltaTime) override;
 	TStatId GetStatId() const override;
+
+	UFUNCTION(BluePrintCallable)
+	void SetGoalTime(float _Time);
+	UFUNCTION(BluePrintCallable)
+	float GetGoalTime() const;
+private:
+	float m_GoalTime;	//ƒS[ƒ‹‚ÌŠÔ
 };
