@@ -50,3 +50,11 @@ float MyCalcu::Sign(float Value)
 {
 	return ((((int)Value & (1 << (sizeof(int) * 8 - 1))) == (1 << (sizeof(int) * 8 - 1))) ? -1.0f : 1.0f);
 }
+
+//“ñƒxƒNƒgƒ‹‚Ì¬‚·Šp‚ÌŽæ“¾
+float MyCalcu::Vec2Angle(FVector _Vec1, FVector _Vec2)
+{
+	float Dot(_Vec1.X * _Vec2.X + _Vec1.Y * _Vec2.Y + _Vec1.Z * _Vec2.Z);
+	float Lens(sqrtf(_Vec1.X * _Vec1.X + _Vec1.Y * _Vec1.Y + _Vec1.Z * _Vec1.Z)* sqrtf(_Vec2.X * _Vec2.X + _Vec2.Y * _Vec2.Y + _Vec2.Z * _Vec2.Z));
+	return 0.0f;
+}

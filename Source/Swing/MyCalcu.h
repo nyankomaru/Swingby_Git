@@ -19,4 +19,6 @@ public:
 	static X Clamp(X Value, X Min, X Max);
 
 	static float Sign(float Value);
+
+	static float Vec2Angle(FVector _Vec1, FVector _Vec2);
 };

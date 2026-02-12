@@ -648,8 +648,11 @@ void APlayerChara::UpdateCameraRot(float DeltaTime)
 	//コースに戻る時は変化しない
 	//else if (!m_bReturnCource)
 	{
-		//m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(),m_pMovement->Velocity.Rotation(), DeltaTime, m_CameraReturnRotSpeed));
-		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), (m_pMovement->Velocity.GetSafeNormal() + m_pMesh->GetForwardVector()).Rotation(), DeltaTime, m_CameraReturnRotSpeed));
+		FRotator MidRot((m_pMovement->Velocity.GetSafeNormal() + m_pMesh->GetForwardVector()).Rotation());	//進行方向とメッシュ向きの中間方向
+		//float VecDot(FVector::DotProduct(m_pMovement->Velocity.GetSafeNormal(), m_pMesh->GetForwardVector()));	//進行方向とメッシュ向きの内積
+		//FRotator AddRot((m_pMesh->GetForwardVector().Rotation() - MidRot) * MyCalcu::Clamp((1.0f - (VecDot + 1.0f) / 2.0f),0.0f,1.0f));	//追加する回転
+
+		m_pSpring->SetWorldRotation(UKismetMathLibrary::RInterpTo(m_pSpring->GetComponentRotation(), MidRot, DeltaTime, m_CameraReturnRotSpeed));
 		//m_pCamera->SetRelativeRotation(UKismetMathLibrary::RInterpTo(m_pCamera->GetRelativeRotation(), FRotator(-20.0f, 0.0f, 0.0f), DeltaTime, m_CameraReturnRotSpeed));
 	}
 

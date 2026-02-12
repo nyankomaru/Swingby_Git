@@ -4,6 +4,7 @@
 #include "MyWorldSubsystem.h"
 #include "MyCamera.h"
 #include "MyCalcu.h"
+#include "MyGameInstanceSubsystem.h"
 
 UMyWorldSubsystem::UMyWorldSubsystem()
 	: m_WorldTimer(0.0f)
@@ -63,6 +64,7 @@ float UMyWorldSubsystem::GetOperateTimer()const
 void UMyWorldSubsystem::SaveOperateTimer()
 {
 	SwitchTimer();
+	GetWorld()->GetGameInstance()->GetSubsystem<UMyGameInstanceSubsystem>()->SetGoalTime(m_OperateTimer);
 }
 
 //ƒJƒƒ‰‚ÌÝ’èEŽæ“¾
@@ -79,7 +81,7 @@ void UMyWorldSubsystem::ChangeCamera(bool _Add)
 {
 	if (m_pCamera.Num() != 0)
 	{
-		m_NowCamID = MyCalcu::Clamp(m_NowCamID + ((_Add) ? 1 : -1), 0, m_pCamera.Num() - 1);
+		m_NowCamID = FMath::Clamp(m_NowCamID + ((_Add) ? 1 : -1), 0, m_pCamera.Num() - 1);
 		GetWorld()->GetFirstPlayerController()->SetViewTargetWithBlend(m_pCamera[m_NowCamID],1.0f);
 	}
 }
